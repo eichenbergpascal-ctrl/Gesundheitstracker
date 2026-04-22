@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #F8F7F4;
+  color: #1A1A1A;
+}
+
+#root {
+  width: 100%;
+  min-height: 100svh;
+  display: flex;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #F2F1EE; }
+::-webkit-scrollbar-thumb { background: #CFCCC5; border-radius: 3px; }
