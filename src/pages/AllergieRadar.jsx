@@ -8,7 +8,7 @@ import { useUserSettings } from '../hooks/useUserSettings'
 import {
   fetchAirQualityData, fetchUVData, fetchWeatherData,
   getDailyMaxValues, getAQILabel, getUVLabel, getPollenLabel, getWeatherLabel,
-  ALLERGEN_MAP
+  calculateHealthScore, ALLERGEN_MAP
 } from '../services/openMeteo'
 
 const ALLERGEN_OPTIONS = Object.entries(ALLERGEN_MAP).map(([id, v]) => ({ id, ...v }))
@@ -65,6 +65,7 @@ export default function AllergieRadar({ user }) {
   const { settings } = useUserSettings(user.id)
   const [chartData, setChartData] = useState([])
   const [todayStats, setTodayStats] = useState(null)
+  const [healthScore, setHealthScore] = useState(null)
   const [loading, setLoading] = useState(true)
   const [stadtName, setStadtName] = useState(null)
   const [weather, setWeather] = useState(null)
@@ -110,11 +111,18 @@ export default function AllergieRadar({ user }) {
       })
       setChartData(chart)
 
-      const todayDate = new Date().toISOString().slice(0, 10)
-      setTodayStats({
-        aqi: Math.round(aqiDaily[todayDate] ?? 0),
-        uv: uvData.daily?.uv_index_max?.[0] ?? 0,
+      const now = new Date()
+      const pad = n => String(n).padStart(2, '0')
+      const todayDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+      const aqi = Math.round(aqiDaily[todayDate] ?? 0)
+      const uv = uvData.daily?.uv_index_max?.[0] ?? 0
+      setTodayStats({ aqi, uv })
+
+      const pollenValues = {}
+      ALLERGEN_OPTIONS.forEach(({ id }) => {
+        pollenValues[id] = allergenDaily[id][todayDate] ?? 0
       })
+      setHealthScore(calculateHealthScore(aqi, uv, pollenValues, selectedAllergies))
 
       setWeather(weatherData)
       setLoading(false)
@@ -123,8 +131,15 @@ export default function AllergieRadar({ user }) {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 256, color: '#475569' }}>
-        <p>Pollendaten werden geladen…</p>
+      <div style={{ background: '#0F172A', minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 256, gap: 16 }}>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+        <div style={{
+          width: 36, height: 36, borderRadius: '50%',
+          border: '3px solid rgba(255,255,255,0.06)',
+          borderTop: '3px solid #06B6D4',
+          animation: 'spin 1s linear infinite',
+        }} />
+        <p style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>Daten werden geladen…</p>
       </div>
     )
   }
@@ -133,19 +148,23 @@ export default function AllergieRadar({ user }) {
     ? ALLERGEN_OPTIONS.filter(a => selectedAllergies.includes(a.id))
     : ALLERGEN_OPTIONS
 
-  let next8 = []
+  let nextHours = []
   if (weather) {
     const now = new Date()
     const pad = n => String(n).padStart(2, '0')
-    const currentHour = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}`
+    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+    const currentHour = `${todayStr}T${pad(now.getHours())}`
     const times = weather.hourly.time
     const startIdx = times.findIndex(t => t.startsWith(currentHour))
     if (startIdx !== -1) {
-      next8 = times.slice(startIdx, startIdx + 8).map((t, i) => ({
-        time: t,
-        temp: weather.hourly.temperature_2m[startIdx + i],
-        code: weather.hourly.weathercode[startIdx + i],
-      }))
+      for (let j = startIdx; j < times.length; j++) {
+        if (!times[j].startsWith(todayStr)) break
+        nextHours.push({
+          time: times[j],
+          temp: weather.hourly.temperature_2m[j],
+          code: weather.hourly.weathercode[j],
+        })
+      }
     }
   }
 
@@ -165,6 +184,42 @@ export default function AllergieRadar({ user }) {
       </div>
 
       <div style={{ padding: '8px 14px 80px' }}>
+
+        {/* Gesundheits-Score */}
+        {healthScore !== null && (() => {
+          const scoreColor = healthScore >= 70 ? '#10B981' : healthScore >= 40 ? '#F59E0B' : '#EF4444'
+          const scoreLabel = healthScore >= 70 ? 'Gut' : healthScore >= 40 ? 'Mäßig' : 'Schlecht'
+          return (
+            <div style={{
+              ...glass,
+              marginBottom: 10,
+              background: `linear-gradient(135deg, ${scoreColor}12, ${scoreColor}06)`,
+              border: `1px solid ${scoreColor}28`,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 4 }}>Allergie-Radar Score</div>
+                  <div style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 36, fontWeight: 700, color: '#F1F5F9', lineHeight: 1,
+                  }}>
+                    {healthScore}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>
+                    auf Basis von Luft, UV &amp; Pollen
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: 12, fontWeight: 600, padding: '5px 14px', borderRadius: 999,
+                  background: `${scoreColor}18`, color: scoreColor,
+                  border: `1px solid ${scoreColor}33`,
+                }}>
+                  {scoreLabel}
+                </span>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Wetter Hero Card */}
         {weather && (
@@ -186,7 +241,7 @@ export default function AllergieRadar({ user }) {
                   fontFamily: "'JetBrains Mono', monospace",
                   fontSize: 40, fontWeight: 700, color: '#F1F5F9', lineHeight: 1,
                 }}>
-                  {Math.round(weather.current.temperature_2m)}°C
+                  {Math.round(nextHours[0]?.temp ?? weather.current.temperature_2m)}°C
                 </div>
                 <div style={{ fontSize: 13, color: '#06B6D4', fontWeight: 600, marginTop: 4 }}>
                   {getWeatherLabel(weather.current.weathercode)}
@@ -199,7 +254,7 @@ export default function AllergieRadar({ user }) {
               </div>
             </div>
 
-            {next8.length > 0 && (
+            {nextHours.length > 0 && (
               <div style={{
                 marginTop: 14, paddingTop: 12,
                 borderTop: '1px solid rgba(255,255,255,0.08)',
@@ -212,7 +267,7 @@ export default function AllergieRadar({ user }) {
                   Stündliche Vorschau
                 </p>
                 <div style={{ display: 'flex', gap: 6 }}>
-                  {next8.map(({ time, temp, code }, i) => {
+                  {nextHours.map(({ time, temp, code }, i) => {
                     const label = getWeatherLabel(code)
                     const shortLabel = label.length > 8 ? label.slice(0, 8) + '…' : label
                     return (
