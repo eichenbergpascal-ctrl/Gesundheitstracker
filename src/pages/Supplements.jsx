@@ -12,6 +12,21 @@ const ZEITPUNKT_LABEL = { morgens: 'Morgens', mittags: 'Mittags', abends: 'Abend
 const HAEUFIGKEIT_LABEL = { taeglich: 'Täglich', jeden_2_tag: 'Jeden 2. Tag', woechentlich: 'Wöchentlich' }
 const ZEITPUNKTE = ['morgens', 'mittags', 'abends']
 
+const glass = {
+  background: 'rgba(255,255,255,0.05)',
+  backdropFilter: 'blur(20px)',
+  WebkitBackdropFilter: 'blur(20px)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 16,
+  padding: 16,
+}
+
+const inputStyle = {
+  width: '100%', padding: '10px 12px', fontSize: 13,
+  background: '#0F172A', border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 10, color: '#F1F5F9', outline: 'none',
+}
+
 function daysBetween(dateStrA, dateStrB) {
   const a = new Date(dateStrA + 'T00:00:00')
   const b = new Date(dateStrB + 'T00:00:00')
@@ -67,13 +82,28 @@ function mapSupp(s) {
 function StreakCard({ streak }) {
   if (streak === 0) return null
   return (
-    <div className="bg-[#E8F0EC] border border-[#2D6A4F] border-opacity-30 rounded-[14px] p-4 mb-5 flex items-center gap-3">
-      <div className="text-2xl font-bold text-[#2D6A4F]">{streak}</div>
+    <div style={{
+      background: 'linear-gradient(135deg, rgba(16,185,129,0.12), rgba(6,182,212,0.08))',
+      border: '1px solid rgba(16,185,129,0.2)',
+      borderRadius: 16, padding: 16,
+      marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14,
+    }}>
+      <div style={{
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 32, fontWeight: 700,
+        background: 'linear-gradient(135deg, #10B981, #06B6D4)',
+        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+        lineHeight: 1,
+      }}>
+        {streak}
+      </div>
       <div>
-        <p className="text-sm font-semibold text-[#2D6A4F]">
+        <p style={{ fontSize: 13, fontWeight: 600, color: '#10B981', margin: 0 }}>
           {streak === 1 ? 'Tag' : 'Tage'} in Folge
         </p>
-        <p className="text-xs text-[#6B6B6B]">Alle täglichen Supplements eingenommen</p>
+        <p style={{ fontSize: 11, color: '#94A3B8', marginTop: 2, marginBottom: 0 }}>
+          Alle täglichen Supplements eingenommen
+        </p>
       </div>
     </div>
   )
@@ -83,45 +113,66 @@ function StreakCard({ streak }) {
 
 function SuppCard({ supp, onToggle, onDelete, dimmed = false }) {
   return (
-    <div
-      className={`bg-white rounded-[14px] p-4 border transition-all ${
-        supp.heuteGenommen
-          ? 'border-blue-200 bg-blue-50'
-          : dimmed
-          ? 'border-[#E8E6E1] opacity-50'
-          : 'border-[#E8E6E1]'
-      }`}
-    >
-      <div className="flex items-center gap-3">
+    <div style={{
+      ...glass,
+      padding: '12px 14px',
+      ...(supp.heuteGenommen
+        ? { background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }
+        : {}),
+      opacity: dimmed ? 0.4 : 1,
+      transition: 'all 0.2s',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <button
           onClick={() => onToggle(supp)}
-          className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${
-            supp.heuteGenommen
-              ? 'bg-[#1D4ED8] border-[#1D4ED8] text-white'
-              : 'border-[#CFCCC5] hover:border-[#1D4ED8]'
-          }`}
+          style={{
+            width: 24, height: 24, borderRadius: 8, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            border: supp.heuteGenommen ? 'none' : '2px solid rgba(255,255,255,0.15)',
+            background: supp.heuteGenommen
+              ? 'linear-gradient(135deg, #6366F1, #8B5CF6)'
+              : 'transparent',
+            cursor: 'pointer',
+            transform: supp.heuteGenommen ? 'scale(1.05)' : 'scale(1)',
+            transition: 'all 0.3s cubic-bezier(.175,.885,.32,1.275)',
+          }}
         >
-          {supp.heuteGenommen && <span className="text-xs">✓</span>}
+          {supp.heuteGenommen && (
+            <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+              <path d="M1 5L4.5 8.5L11 1.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
         </button>
-        <div className="flex-1 min-w-0">
-          <p className={`text-sm font-semibold ${supp.heuteGenommen ? 'text-[#1D4ED8]' : 'text-[#1A1A1A]'}`}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{
+            fontSize: 13, fontWeight: 600, margin: 0,
+            color: supp.heuteGenommen ? '#A5B4FC' : '#F1F5F9',
+          }}>
             {supp.name}
           </p>
-          <div className="flex gap-3 mt-0.5 flex-wrap">
+          <div style={{ display: 'flex', gap: 10, marginTop: 2, flexWrap: 'wrap' }}>
             {supp.dosierung && (
-              <span className="text-xs text-[#6B6B6B]">{supp.dosierung}</span>
+              <span style={{ fontSize: 11, color: '#94A3B8' }}>{supp.dosierung}</span>
             )}
-            <span className="text-xs text-[#A8A8A8]">
+            <span style={{ fontSize: 11, color: '#475569' }}>
               {HAEUFIGKEIT_LABEL[supp.haeufigkeit] ?? supp.haeufigkeit}
             </span>
           </div>
           {supp.heuteGenommen && (
-            <span className="text-xs text-[#1D4ED8]">Heute genommen</span>
+            <span style={{ fontSize: 10, color: '#818CF8', marginTop: 2, display: 'block' }}>
+              Heute genommen
+            </span>
           )}
         </div>
         <button
           onClick={() => onDelete(supp.id)}
-          className="text-[#CFCCC5] hover:text-[#991B1B] transition-colors text-xl leading-none"
+          style={{
+            color: 'rgba(255,255,255,0.2)', background: 'none', border: 'none',
+            cursor: 'pointer', fontSize: 20, lineHeight: 1, padding: 0,
+            transition: 'color 0.2s',
+          }}
+          onMouseEnter={e => e.target.style.color = '#EF4444'}
+          onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.2)'}
         >
           ×
         </button>
@@ -202,6 +253,7 @@ function SupplementTab({ user, prefill, onPrefillConsumed }) {
     const { error } = await supabase.from('supplements')
       .update({ letztes_nehmen: taken ? new Date().toISOString() : null })
       .eq('id', supp.id)
+      .eq('user_id', user.id)
     if (error) {
       setSupplements(previous)
       setToggleError('Supplement konnte nicht aktualisiert werden.')
@@ -209,7 +261,7 @@ function SupplementTab({ user, prefill, onPrefillConsumed }) {
   }
 
   async function handleDelete(id) {
-    await supabase.from('supplements').delete().eq('id', id)
+    await supabase.from('supplements').delete().eq('id', id).eq('user_id', user.id)
   }
 
   const faelligeHeute = supplements.filter(s => s.heuteFaellig)
@@ -217,22 +269,38 @@ function SupplementTab({ user, prefill, onPrefillConsumed }) {
   const takenToday = faelligeHeute.filter(s => s.heuteGenommen).length
   const streak = calculateStreak(supplements)
 
+  const selectStyle = {
+    ...inputStyle,
+    appearance: 'none', WebkitAppearance: 'none',
+  }
+
   return (
     <div>
       {toggleError && (
-        <div className="mb-4 px-4 py-2.5 rounded-[10px] bg-red-50 border border-red-200 flex items-center justify-between">
-          <span className="text-sm text-[#991B1B]">{toggleError}</span>
-          <button onClick={() => setToggleError(null)} className="text-[#991B1B] text-lg leading-none ml-3">×</button>
+        <div style={{
+          marginBottom: 14, padding: '10px 14px', borderRadius: 10,
+          background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <span style={{ fontSize: 13, color: '#EF4444' }}>{toggleError}</span>
+          <button onClick={() => setToggleError(null)} style={{ color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
         </div>
       )}
-      <div className="flex items-center justify-between mb-5">
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <h2 className="text-lg font-bold text-[#1A1A1A]">Supplements</h2>
-          <p className="text-sm text-[#6B6B6B]">{takenToday}/{faelligeHeute.length} heute erledigt</p>
+          <h2 style={{ fontSize: 17, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>Supplements</h2>
+          <p style={{ fontSize: 12, color: '#94A3B8', marginTop: 2, marginBottom: 0 }}>
+            {takenToday}/{faelligeHeute.length} heute erledigt
+          </p>
         </div>
         <button
           onClick={() => setShowForm(s => !s)}
-          className="bg-[#1D4ED8] text-white text-sm font-medium px-4 py-2 rounded-[10px] hover:bg-[#1e40af] transition-colors"
+          style={{
+            background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+            color: '#fff', fontSize: 13, fontWeight: 600,
+            padding: '8px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
+          }}
         >
           + Supplement
         </button>
@@ -241,110 +309,140 @@ function SupplementTab({ user, prefill, onPrefillConsumed }) {
       <StreakCard streak={streak} />
 
       {faelligeHeute.length > 0 && (
-        <div className="bg-white rounded-[14px] p-4 border border-[#E8E6E1] mb-5">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-[#6B6B6B]">Heutige Einnahme</span>
-            <span className="text-sm font-bold text-[#1D4ED8]">{takenToday}/{faelligeHeute.length}</span>
+        <div style={{ ...glass, marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontSize: 12, color: '#94A3B8' }}>Heutige Einnahme</span>
+            <span style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 13, fontWeight: 700, color: '#6366F1',
+            }}>
+              {takenToday}/{faelligeHeute.length}
+            </span>
           </div>
-          <div className="w-full rounded-full h-2" style={{ backgroundColor: '#E8E6E1' }}>
-            <div
-              className="h-2 rounded-full transition-all"
-              style={{
-                width: faelligeHeute.length ? `${(takenToday / faelligeHeute.length) * 100}%` : '0%',
-                backgroundColor: '#1D4ED8',
-              }}
-            />
+          <div style={{ width: '100%', height: 5, borderRadius: 999, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+            <div style={{
+              height: '100%', borderRadius: 999,
+              width: faelligeHeute.length ? `${(takenToday / faelligeHeute.length) * 100}%` : '0%',
+              background: 'linear-gradient(90deg, #6366F1, #8B5CF6)',
+              transition: 'width 0.4s ease',
+            }} />
           </div>
         </div>
       )}
 
       {showForm && (
-        <form
-          onSubmit={handleSave}
-          className="bg-blue-50 border border-blue-200 rounded-[14px] p-5 mb-5 space-y-3"
-        >
-          <h3 className="text-sm font-semibold text-blue-800">Neues Supplement</h3>
-          <div>
-            <label className="text-xs text-[#6B6B6B] mb-1 block">Name *</label>
-            <input
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              placeholder="z.B. Vitamin D3, Magnesium, Omega-3"
-              required
-              className="w-full border border-[#E8E6E1] rounded-[10px] px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-[#6B6B6B] mb-1 block">Dosierung</label>
-            <input
-              value={form.dosierung}
-              onChange={e => setForm(f => ({ ...f, dosierung: e.target.value }))}
-              placeholder="z.B. 1000 IE, 400 mg, 2 Kapseln"
-              className="w-full border border-[#E8E6E1] rounded-[10px] px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-[#6B6B6B] mb-1 block">Einnahmezeitpunkt</label>
-              <select
-                value={form.zeitpunkt}
-                onChange={e => setForm(f => ({ ...f, zeitpunkt: e.target.value }))}
-                className="w-full border border-[#E8E6E1] rounded-[10px] px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]"
-              >
-                <option value="morgens">Morgens</option>
-                <option value="mittags">Mittags</option>
-                <option value="abends">Abends</option>
-              </select>
+        <div style={{
+          background: 'rgba(99,102,241,0.06)',
+          border: '1px solid rgba(99,102,241,0.2)',
+          borderRadius: 16, padding: 18, marginBottom: 16,
+        }}>
+          <h3 style={{ fontSize: 13, fontWeight: 600, color: '#A5B4FC', marginBottom: 14, marginTop: 0 }}>
+            Neues Supplement
+          </h3>
+          <form onSubmit={handleSave}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 11, color: '#94A3B8', display: 'block', marginBottom: 5 }}>Name *</label>
+                <input
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder="z.B. Vitamin D3, Magnesium, Omega-3"
+                  required
+                  style={inputStyle}
+                  onFocus={e => e.target.style.borderColor = '#6366F1'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#94A3B8', display: 'block', marginBottom: 5 }}>Dosierung</label>
+                <input
+                  value={form.dosierung}
+                  onChange={e => setForm(f => ({ ...f, dosierung: e.target.value }))}
+                  placeholder="z.B. 1000 IE, 400 mg, 2 Kapseln"
+                  style={inputStyle}
+                  onFocus={e => e.target.style.borderColor = '#6366F1'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: '#94A3B8', display: 'block', marginBottom: 5 }}>Einnahmezeitpunkt</label>
+                  <select
+                    value={form.zeitpunkt}
+                    onChange={e => setForm(f => ({ ...f, zeitpunkt: e.target.value }))}
+                    style={selectStyle}
+                    onFocus={e => e.target.style.borderColor = '#6366F1'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                  >
+                    <option value="morgens">Morgens</option>
+                    <option value="mittags">Mittags</option>
+                    <option value="abends">Abends</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: '#94A3B8', display: 'block', marginBottom: 5 }}>Häufigkeit</label>
+                  <select
+                    value={form.haeufigkeit}
+                    onChange={e => setForm(f => ({ ...f, haeufigkeit: e.target.value }))}
+                    style={selectStyle}
+                    onFocus={e => e.target.style.borderColor = '#6366F1'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                  >
+                    <option value="taeglich">Täglich</option>
+                    <option value="jeden_2_tag">Jeden 2. Tag</option>
+                    <option value="woechentlich">Wöchentlich</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  style={{
+                    flex: 1, padding: '10px 16px', fontSize: 13, fontWeight: 600,
+                    background: saving ? 'rgba(99,102,241,0.4)' : 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                    color: '#fff', border: 'none', borderRadius: 10, cursor: saving ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {saving ? 'Speichern …' : 'Hinzufügen'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  style={{
+                    padding: '10px 16px', fontSize: 13, fontWeight: 500,
+                    background: 'transparent', color: '#94A3B8',
+                    border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, cursor: 'pointer',
+                  }}
+                >
+                  Abbrechen
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="text-xs text-[#6B6B6B] mb-1 block">Häufigkeit</label>
-              <select
-                value={form.haeufigkeit}
-                onChange={e => setForm(f => ({ ...f, haeufigkeit: e.target.value }))}
-                className="w-full border border-[#E8E6E1] rounded-[10px] px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]"
-              >
-                <option value="taeglich">Täglich</option>
-                <option value="jeden_2_tag">Jeden 2. Tag</option>
-                <option value="woechentlich">Wöchentlich</option>
-              </select>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex-1 bg-[#1D4ED8] text-white text-sm font-medium py-2 rounded-[10px] hover:bg-[#1e40af] disabled:opacity-50 transition-colors"
-            >
-              {saving ? 'Speichern …' : 'Hinzufügen'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="px-4 py-2 text-sm text-[#6B6B6B] hover:text-[#1A1A1A] rounded-[10px] border border-[#CFCCC5] bg-white"
-            >
-              Abbrechen
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       )}
 
       {supplements.length === 0 && !showForm ? (
-        <div className="text-center py-12 text-[#A8A8A8]">
-          <p className="text-sm">Noch keine Supplements eingetragen.</p>
+        <div style={{ textAlign: 'center', padding: '48px 0', color: '#475569' }}>
+          <p style={{ fontSize: 13 }}>Noch keine Supplements eingetragen.</p>
         </div>
       ) : (
         <>
           {faelligeHeute.length > 0 && (
-            <div className="space-y-4 mb-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 14 }}>
               {ZEITPUNKTE.map(zp => {
                 const gruppe = faelligeHeute.filter(s => s.zeitpunkt === zp)
                 if (gruppe.length === 0) return null
                 return (
                   <div key={zp}>
-                    <h3 className="text-xs font-semibold text-[#A8A8A8] uppercase tracking-wide mb-2">
+                    <h3 style={{
+                      fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
+                      textTransform: 'uppercase', color: '#475569', marginBottom: 8, marginTop: 0,
+                    }}>
                       {ZEITPUNKT_LABEL[zp]}
                     </h3>
-                    <div className="space-y-2">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {gruppe.map(supp => (
                         <SuppCard
                           key={supp.id}
@@ -364,13 +462,17 @@ function SupplementTab({ user, prefill, onPrefillConsumed }) {
             <div>
               <button
                 onClick={() => setShowNichtFaellig(v => !v)}
-                className="text-xs text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors mb-2 flex items-center gap-1"
+                style={{
+                  fontSize: 11, color: '#475569', background: 'none', border: 'none',
+                  cursor: 'pointer', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4,
+                  padding: 0,
+                }}
               >
-                <span>{showNichtFaellig ? '▾' : '▸'}</span>
+                <span style={{ fontSize: 10 }}>{showNichtFaellig ? '▾' : '▸'}</span>
                 Nicht fällig heute ({nichtFaellig.length})
               </button>
               {showNichtFaellig && (
-                <div className="space-y-2">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {nichtFaellig.map(supp => (
                     <SuppCard
                       key={supp.id}
@@ -393,13 +495,16 @@ function SupplementTab({ user, prefill, onPrefillConsumed }) {
 // ─── PriorityBadge ───────────────────────────────────────────────────────────
 
 function PriorityBadge({ priority }) {
-  const cls = priority === 'hoch'
-    ? 'bg-red-50 text-[#991B1B]'
-    : 'bg-[#FEF3C7] text-[#92400E]'
-  const label = priority === 'hoch' ? 'Hohe Priorität' : 'Mittlere Priorität'
+  const isHoch = priority === 'hoch'
   return (
-    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${cls}`}>
-      {label}
+    <span style={{
+      fontSize: 10, fontWeight: 600,
+      padding: '3px 10px', borderRadius: 999, whiteSpace: 'nowrap',
+      background: isHoch ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)',
+      color: isHoch ? '#F87171' : '#FCD34D',
+      border: `1px solid ${isHoch ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)'}`,
+    }}>
+      {isHoch ? 'Hohe Priorität' : 'Mittlere Priorität'}
     </span>
   )
 }
@@ -408,19 +513,22 @@ function PriorityBadge({ priority }) {
 
 function GuideSkeleton() {
   return (
-    <div className="space-y-3">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {[1, 2, 3].map(i => (
-        <div key={i} className="bg-white rounded-[14px] p-5 border border-[#E8E6E1] animate-pulse">
-          <div className="flex items-start justify-between gap-3 mb-3">
-            <div className="h-5 bg-[#F2F1EE] rounded w-1/3" />
-            <div className="h-6 bg-[#F2F1EE] rounded-full w-28 shrink-0" />
+        <div key={i} style={{
+          ...glass, padding: 20,
+          background: 'rgba(255,255,255,0.03)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+            <div style={{ height: 16, background: 'rgba(255,255,255,0.06)', borderRadius: 8, width: '33%' }} />
+            <div style={{ height: 22, background: 'rgba(255,255,255,0.06)', borderRadius: 999, width: 96, flexShrink: 0 }} />
           </div>
-          <div className="h-4 bg-[#F2F1EE] rounded w-full mb-1.5" />
-          <div className="h-4 bg-[#F2F1EE] rounded w-4/5 mb-4" />
-          <div className="border-t border-[#F2F1EE] my-3" />
-          <div className="h-4 bg-[#F2F1EE] rounded w-3/5 mb-2" />
-          <div className="h-4 bg-[#F2F1EE] rounded w-2/3 mb-3" />
-          <div className="h-9 bg-[#F2F1EE] rounded-[10px] w-full" />
+          <div style={{ height: 12, background: 'rgba(255,255,255,0.06)', borderRadius: 6, width: '100%', marginBottom: 6 }} />
+          <div style={{ height: 12, background: 'rgba(255,255,255,0.06)', borderRadius: 6, width: '80%', marginBottom: 16 }} />
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0 0 12px' }} />
+          <div style={{ height: 12, background: 'rgba(255,255,255,0.06)', borderRadius: 6, width: '60%', marginBottom: 6 }} />
+          <div style={{ height: 12, background: 'rgba(255,255,255,0.06)', borderRadius: 6, width: '70%', marginBottom: 12 }} />
+          <div style={{ height: 36, background: 'rgba(255,255,255,0.06)', borderRadius: 10, width: '100%' }} />
         </div>
       ))}
     </div>
@@ -503,9 +611,9 @@ function GuideTab({ user, onAddSupplement }) {
 
   return (
     <div>
-      <div className="mb-5">
-        <h2 className="text-lg font-bold text-[#1A1A1A]">Supplement-Guide</h2>
-        <p className="text-sm text-[#6B6B6B]">
+      <div style={{ marginBottom: 20 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>Supplement-Guide</h2>
+        <p style={{ fontSize: 12, color: '#94A3B8', marginTop: 4, marginBottom: 0 }}>
           Persönliche Empfehlungen auf Basis deiner Ernährung und Umweltdaten
         </p>
       </div>
@@ -513,34 +621,38 @@ function GuideTab({ user, onAddSupplement }) {
       {loading ? (
         <GuideSkeleton />
       ) : suggestions.length === 0 ? (
-        <div className="bg-[#E8F0EC] rounded-[14px] p-5 border border-[#2D6A4F] border-opacity-20">
-          <p className="text-sm font-semibold text-[#2D6A4F]">
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(6,182,212,0.05))',
+          border: '1px solid rgba(16,185,129,0.2)',
+          borderRadius: 16, padding: 20,
+        }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: '#34D399', margin: 0 }}>
             Dein aktuelles Profil zeigt keine offensichtlichen Lücken – weiter so!
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {suggestions.map(s => (
-            <div key={s.name} className="bg-white rounded-[14px] p-5 border border-[#E8E6E1]">
-              <div className="flex items-start justify-between gap-3">
-                <span className="font-bold text-[#1A1A1A]">{s.name}</span>
+            <div key={s.name} style={{ ...glass, padding: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9' }}>{s.name}</span>
                 <PriorityBadge priority={s.priority} />
               </div>
 
-              <p className="text-sm text-[#6B6B6B] mt-2">{s.reason}</p>
+              <p style={{ fontSize: 13, color: '#94A3B8', marginTop: 10, marginBottom: 0 }}>{s.reason}</p>
 
-              <div className="border-t border-[#F2F1EE] my-3" />
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '14px 0' }} />
 
-              <div className="space-y-1.5">
-                <p className="text-sm text-[#1A1A1A]">
-                  <span className="text-[#6B6B6B]">Empfohlene Dosis: </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <p style={{ fontSize: 13, color: '#F1F5F9', margin: 0 }}>
+                  <span style={{ color: '#94A3B8' }}>Empfohlene Dosis: </span>
                   {s.dosis}
                 </p>
-                <p className="text-sm text-[#6B6B6B]">
-                  <span className="font-medium text-[#1A1A1A]">Hinweis: </span>
+                <p style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>
+                  <span style={{ fontWeight: 600, color: '#CBD5E1' }}>Hinweis: </span>
                   {s.hinweis}
                 </p>
-                <p className="text-xs text-[#A8A8A8]">
+                <p style={{ fontSize: 11, color: '#475569', margin: 0 }}>
                   {ZEITPUNKT_LABEL[s.defaultZeitpunkt] ?? s.defaultZeitpunkt}
                   {' · '}
                   {HAEUFIGKEIT_LABEL[s.defaultHaeufigkeit] ?? s.defaultHaeufigkeit}
@@ -549,7 +661,23 @@ function GuideTab({ user, onAddSupplement }) {
 
               <button
                 onClick={() => onAddSupplement(s)}
-                className="w-full mt-3 py-2 rounded-[10px] border border-[#1D4ED8] text-[#1D4ED8] text-sm hover:bg-blue-50 transition-colors"
+                style={{
+                  width: '100%', marginTop: 14, padding: '10px 16px',
+                  fontSize: 13, fontWeight: 600,
+                  background: 'transparent',
+                  color: '#818CF8',
+                  border: '1px solid rgba(99,102,241,0.3)',
+                  borderRadius: 10, cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={e => {
+                  e.target.style.background = 'rgba(99,102,241,0.1)'
+                  e.target.style.borderColor = 'rgba(99,102,241,0.5)'
+                }}
+                onMouseLeave={e => {
+                  e.target.style.background = 'transparent'
+                  e.target.style.borderColor = 'rgba(99,102,241,0.3)'
+                }}
               >
                 Zu meinen Supplements hinzufügen
               </button>
@@ -558,7 +686,7 @@ function GuideTab({ user, onAddSupplement }) {
         </div>
       )}
 
-      <p className="text-xs text-[#A8A8A8] text-center mt-6">
+      <p style={{ fontSize: 11, color: '#475569', textAlign: 'center', marginTop: 24 }}>
         Diese Empfehlungen ersetzen keine medizinische Beratung.
         Bitte sprich mit deinem Arzt bevor du neue Supplements einnimmst.
       </p>
@@ -588,37 +716,53 @@ export default function Supplements({ user }) {
   ]
 
   return (
-    <div className="px-4 py-5 md:px-8 md:py-7 max-w-5xl mx-auto w-full pb-24 md:pb-6">
-      <h1 className="text-2xl font-bold text-[#1A1A1A] mb-1">Supplements</h1>
-      <p className="text-[#6B6B6B] text-sm mb-5">Tagesplan und persönlicher Guide</p>
-
-      <div className="flex gap-1 p-1 rounded-[10px] mb-6" style={{ backgroundColor: '#F2F1EE' }}>
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 text-sm font-medium py-2 px-3 rounded-[8px] transition-all ${
-              activeTab === tab.id
-                ? 'bg-white text-[#1A1A1A] shadow-sm'
-                : 'text-[#6B6B6B] hover:text-[#1A1A1A]'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+    <div style={{ background: '#0F172A', minHeight: '100%' }}>
+      <div style={{ padding: '16px 18px 8px' }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>Supplements</h1>
+        <p style={{ fontSize: 13, color: '#94A3B8', marginTop: 4, marginBottom: 0 }}>
+          Tagesplan und persönlicher Guide
+        </p>
       </div>
 
-      {activeTab === 'supplements' && (
-        <SupplementTab
-          user={user}
-          prefill={prefill}
-          onPrefillConsumed={() => setPrefill(null)}
-        />
-      )}
+      <div style={{ padding: '8px 14px 0' }}>
+        <div style={{
+          display: 'flex', gap: 4, padding: 4,
+          background: '#1E293B', borderRadius: 12, marginBottom: 20,
+        }}>
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                flex: 1, fontSize: 13, fontWeight: 500,
+                padding: '8px 12px', borderRadius: 8,
+                border: 'none', cursor: 'pointer',
+                transition: 'all 0.2s',
+                background: activeTab === tab.id
+                  ? 'rgba(255,255,255,0.08)'
+                  : 'transparent',
+                color: activeTab === tab.id ? '#F1F5F9' : '#94A3B8',
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      {activeTab === 'guide' && (
-        <GuideTab user={user} onAddSupplement={handleAddSupplement} />
-      )}
+      <div style={{ padding: '0 14px 80px' }}>
+        {activeTab === 'supplements' && (
+          <SupplementTab
+            user={user}
+            prefill={prefill}
+            onPrefillConsumed={() => setPrefill(null)}
+          />
+        )}
+
+        {activeTab === 'guide' && (
+          <GuideTab user={user} onAddSupplement={handleAddSupplement} />
+        )}
+      </div>
     </div>
   )
 }

@@ -66,7 +66,6 @@ const ZEITPUNKT_LABELS = { morgens: 'Morgens', mittags: 'Mittags', abends: 'Aben
 function generateHandlungsschritte({ faelligeHeute, nutritionTotals, goals }) {
   const schritte = []
 
-  // Supplements
   const nichtGenommen = faelligeHeute.filter(s => !s.heuteGenommen)
   nichtGenommen.forEach(s => {
     const zLabel = ZEITPUNKT_LABELS[s.zeitpunkt_neu] || s.zeitpunkt_neu || ''
@@ -76,7 +75,6 @@ function generateHandlungsschritte({ faelligeHeute, nutritionTotals, goals }) {
     schritte.push({ typ: 'positiv', text: 'Alle heutigen Supplements eingenommen.' })
   }
 
-  // Ernährung
   if (nutritionTotals.kcal === 0) {
     schritte.push({
       typ: 'info',
@@ -116,116 +114,127 @@ function generateHandlungsschritte({ faelligeHeute, nutritionTotals, goals }) {
   return [...warnungen, ...positiv, ...info].slice(0, 5)
 }
 
-// ─── Komponenten ────────────────────────────────────────────────────────────
+// ─── Score Ring ─────────────────────────────────────────────────────────────
 
-function ScoreCircle({ score, small }) {
-  const size = small ? 110 : 140
+function ScoreRing({ score }) {
+  const size = 150
+  const sw = 11
+  const r = (size - sw) / 2
   const cx = size / 2
-  const r = small ? 41 : 52
   const circ = 2 * Math.PI * r
-  const fontSize = small ? '22px' : '28px'
-  const yScore = cx - 7
-  const ySubLabel = cx + 14
 
   if (score === null) {
     return (
-      <div className="flex flex-col items-center">
+      <div style={{ position: 'relative', width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          <circle cx={cx} cy={cx} r={r} fill="none" stroke="#E8E6E1" strokeWidth="10" />
-          <text x={cx} y={cx} textAnchor="middle" dominantBaseline="middle"
-            style={{ fontSize, fontWeight: '700', fill: '#A8A8A8' }}>
-            –
-          </text>
+          <circle cx={cx} cy={cx} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={sw} />
         </svg>
-        <span className={`font-semibold mt-1 text-center text-[#A8A8A8] ${small ? 'text-sm' : 'text-base'}`}>
-          Noch kein Eintrag heute
-        </span>
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 36, fontWeight: 700, color: '#475569', lineHeight: 1 }}>–</span>
+          <span style={{ fontSize: 11, color: '#475569', marginTop: 4 }}>Noch kein Eintrag</span>
+        </div>
       </div>
     )
   }
 
-  const ringColor = score >= 75 ? '#2D6A4F' : score >= 50 ? '#B45309' : '#991B1B'
-  const label = score >= 75 ? 'Gut' : score >= 50 ? 'Mäßig' : 'Schlecht'
   const dash = (score / 100) * circ
+  const gradId = 'dashScoreGrad'
+  const isGood = score >= 75
+  const isMed = score >= 50
 
   return (
-    <div className="flex flex-col items-center">
+    <div style={{ position: 'relative', width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle cx={cx} cy={cx} r={r} fill="none" stroke="#E8E6E1" strokeWidth="10" />
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={isGood ? '#10B981' : isMed ? '#F59E0B' : '#EF4444'} />
+            <stop offset="100%" stopColor={isGood ? '#06B6D4' : isMed ? '#D97706' : '#F97066'} />
+          </linearGradient>
+        </defs>
+        <circle cx={cx} cy={cx} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={sw} />
         <circle
           cx={cx} cy={cx} r={r} fill="none"
-          stroke={ringColor} strokeWidth="10"
+          stroke={`url(#${gradId})`} strokeWidth={sw}
           strokeDasharray={`${dash} ${circ}`}
           strokeLinecap="round"
           transform={`rotate(-90 ${cx} ${cx})`}
-          style={{ transition: 'stroke-dasharray 0.8s ease' }}
+          style={{ transition: 'stroke-dasharray 1.2s cubic-bezier(.4,0,.2,1)' }}
         />
-        <text x={cx} y={cx} textAnchor="middle" dominantBaseline="middle"
-          style={{ fontSize, fontWeight: '700', fill: ringColor }}>
-          {score}
-        </text>
       </svg>
-      <span className={`font-semibold mt-1 ${small ? 'text-base' : 'text-lg'}`} style={{ color: ringColor }}>
-        {label}
-      </span>
-    </div>
-  )
-}
-
-function StatCard({ title, value, label, labelColor, subtitle }) {
-  return (
-    <div className="bg-white rounded-[14px] p-5 border border-[#E8E6E1]">
-      <div className="flex items-start justify-between mb-3">
-        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full bg-[#F2F1EE] ${labelColor}`}>
-          {label}
+      <div style={{
+        position: 'absolute', inset: 0,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <span style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 38, fontWeight: 700, color: '#F1F5F9', lineHeight: 1,
+        }}>{score}</span>
+        <span style={{
+          fontSize: 12, fontWeight: 600, marginTop: 3,
+          color: isGood ? '#10B981' : isMed ? '#F59E0B' : '#EF4444',
+        }}>
+          {isGood ? 'Gut' : isMed ? 'Mäßig' : 'Niedrig'}
         </span>
       </div>
-      <div className="text-2xl font-bold text-[#1A1A1A]">{value}</div>
-      <div className="text-sm text-[#6B6B6B] mt-1">{title}</div>
-      {subtitle && <div className="text-xs text-[#A8A8A8] mt-0.5">{subtitle}</div>}
     </div>
   )
 }
 
-function Skeleton({ className }) {
-  return <div className={`animate-pulse bg-[#F2F1EE] rounded-[10px] ${className}`} />
+// ─── Skeleton ───────────────────────────────────────────────────────────────
+
+function Skeleton({ style }) {
+  return (
+    <div style={{
+      background: 'rgba(255,255,255,0.06)', borderRadius: 10,
+      animation: 'pulse 2s infinite', ...style,
+    }} />
+  )
 }
 
-function ProgressBar({ pct, color }) {
+// ─── ProgressBar ────────────────────────────────────────────────────────────
+
+function ProgressBar({ pct, gradient }) {
   return (
-    <div className="w-full rounded-full h-1.5" style={{ backgroundColor: '#E8E6E1' }}>
-      <div
-        className="h-1.5 rounded-full transition-all duration-300"
-        style={{ width: `${Math.min(100, pct)}%`, backgroundColor: color }}
-      />
+    <div style={{ width: '100%', height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+      <div style={{
+        height: '100%', borderRadius: 999,
+        width: `${Math.min(100, pct)}%`,
+        background: gradient || 'linear-gradient(90deg, #10B981, #06B6D4)',
+        transition: 'width 0.8s cubic-bezier(.4,0,.2,1)',
+      }} />
     </div>
   )
 }
 
 // ─── Hauptkomponente ────────────────────────────────────────────────────────
 
+const glassCard = {
+  background: 'rgba(255,255,255,0.05)',
+  backdropFilter: 'blur(20px)',
+  WebkitBackdropFilter: 'blur(20px)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 16,
+  padding: 16,
+  position: 'relative',
+  overflow: 'hidden',
+}
+
 export default function Dashboard({ user, setPage }) {
   const { settings } = useUserSettings(user.id)
-  const [expanded, setExpanded] = useState(false)
   const [suppError, setSuppError] = useState(null)
 
-  // Ernährung heute
-  const [nutritionTotals, setNutritionTotals] = useState(
-    { kcal: 0, protein: 0, kohlenhydrate: 0, fett: 0 }
-  )
+  const [nutritionTotals, setNutritionTotals] = useState({ kcal: 0, protein: 0, kohlenhydrate: 0, fett: 0 })
   const [loadingNutrition, setLoadingNutrition] = useState(true)
-
-  // Supplements
   const [supplements, setSupplements] = useState([])
   const [loadingSupplements, setLoadingSupplements] = useState(true)
-
-  // Arzttermine (nächste 7 Tage)
   const [termine, setTermine] = useState([])
   const [loadingTermine, setLoadingTermine] = useState(true)
 
   const goals = settings.ernaehrungsziele ?? DEFAULT_GOALS
 
-  // ── Daten laden ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!user?.id) return
     const todayStr = todayKey()
@@ -234,26 +243,10 @@ export default function Dashboard({ user, setPage }) {
     const plus7Str = plus7.toISOString().slice(0, 10)
 
     Promise.all([
-      supabase
-        .from('nutrition_log')
-        .select('items')
-        .eq('user_id', user.id)
-        .eq('date', todayStr)
-        .maybeSingle(),
-      supabase
-        .from('supplements')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at'),
-      supabase
-        .from('appointments')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('abgeschlossen', false)
-        .gte('datum', todayStr)
-        .lte('datum', plus7Str)
-        .order('datum')
-        .limit(3),
+      supabase.from('nutrition_log').select('items').eq('user_id', user.id).eq('date', todayStr).maybeSingle(),
+      supabase.from('supplements').select('*').eq('user_id', user.id).order('created_at'),
+      supabase.from('appointments').select('*').eq('user_id', user.id).eq('abgeschlossen', false)
+        .gte('datum', todayStr).lte('datum', plus7Str).order('datum').limit(3),
     ])
       .then(([nutritionRes, supplRes, termineRes]) => {
         setNutritionTotals(calcTotals(nutritionRes.data?.items ?? []))
@@ -270,7 +263,6 @@ export default function Dashboard({ user, setPage }) {
       })
   }, [user.id])
 
-  // ── Supplement-Toggle ────────────────────────────────────────────────────
   async function toggleSupplement(supp) {
     const taken = !supp.heuteGenommen
     const previous = supplements
@@ -285,13 +277,13 @@ export default function Dashboard({ user, setPage }) {
       .from('supplements')
       .update({ letztes_nehmen: taken ? new Date().toISOString() : null })
       .eq('id', supp.id)
+      .eq('user_id', user.id)
     if (error) {
       setSupplements(previous)
       setSuppError('Supplement konnte nicht aktualisiert werden.')
     }
   }
 
-  // ── Abgeleitete Werte ─────────────────────────────────────────────────────
   const faelligeHeute = supplements.filter(s => s.heuteFaellig)
   const takenToday = faelligeHeute.filter(s => s.heuteGenommen).length
   const suppHatEintraege = faelligeHeute.length > 0
@@ -306,225 +298,329 @@ export default function Dashboard({ user, setPage }) {
     : generateHandlungsschritte({ faelligeHeute, nutritionTotals, goals })
 
   const hour = new Date().getHours()
-  const zeitpunkt = hour < 12 ? 'morgens' : hour < 17 ? 'mittags' : 'abends'
-  const zeitpunktLabel = ZEITPUNKT_LABELS[zeitpunkt]
-  const faelligJetzt = faelligeHeute.filter(s => s.zeitpunkt_neu === zeitpunkt)
-  const genommenJetzt = faelligJetzt.filter(s => s.heuteGenommen)
-  const suppHinweis = faelligJetzt.length === 0
-    ? `Keine Supplements für ${zeitpunktLabel} geplant.`
-    : genommenJetzt.length === faelligJetzt.length
-    ? `Alle ${zeitpunktLabel}-Supplements eingenommen.`
-    : `${faelligJetzt.length - genommenJetzt.length} ${zeitpunktLabel}-Supplement(s) noch ausstehend.`
+  const greeting = hour < 12 ? 'Guten Morgen' : hour < 17 ? 'Guten Tag' : 'Guten Abend'
+  const userName = user.email?.split('@')[0] ?? ''
 
   const kalorienRatio = goals.kcal > 0 ? nutritionTotals.kcal / goals.kcal : 0
-  const kalorienBarColor = kalorienRatio >= 0.8 && kalorienRatio <= 1.1 ? '#2D6A4F' : '#B45309'
+  const kalorienGrad = kalorienRatio <= 1.1 ? 'linear-gradient(90deg, #10B981, #06B6D4)' : 'linear-gradient(90deg, #F59E0B, #F97066)'
   const kalorienPct = Math.round(kalorienRatio * 100)
 
-  // ─────────────────────────────────────────────────────────────────────────
+  const suppGrad = 'linear-gradient(90deg, #6366F1, #8B5CF6)'
+
+  const ernScore = makroScore !== null ? Math.round(makroScore) : null
+  const suppDisplayScore = suppHatEintraege ? Math.round(suppScore) : null
 
   return (
-    <div className="px-4 py-5 md:px-8 md:py-7 max-w-5xl mx-auto w-full">
+    <div style={{ minHeight: '100%', background: '#0F172A', paddingBottom: 80 }}>
 
       {suppError && (
-        <div className="mb-4 px-4 py-2.5 rounded-[10px] bg-red-50 border border-red-200 flex items-center justify-between">
-          <span className="text-sm text-[#991B1B]">{suppError}</span>
-          <button onClick={() => setSuppError(null)} className="text-[#991B1B] text-lg leading-none ml-3">×</button>
+        <div style={{
+          margin: '8px 14px 0', padding: '10px 14px', borderRadius: 10,
+          background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <span style={{ fontSize: 13, color: '#EF4444' }}>{suppError}</span>
+          <button onClick={() => setSuppError(null)} style={{ color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
         </div>
       )}
 
-      {/* ── 1. Score Card ─────────────────────────────────────────────────── */}
-      <div
-        className="bg-white rounded-[14px] border border-[#E8E6E1] mb-5 cursor-pointer transition-all duration-300"
-        onClick={() => !scorePending && setExpanded(e => !e)}
-      >
-        <div className="p-6">
-          <div className="flex flex-col items-center">
-            <h2 className="text-sm font-semibold text-[#6B6B6B] uppercase tracking-wide mb-1">
-              Tages-Gesundheits-Score
-            </h2>
-            <p className="text-[#A8A8A8] text-xs mb-4">
-              {new Date().toLocaleDateString('de-DE', {
-                weekday: 'long', day: 'numeric', month: 'long',
-              })}
-            </p>
-          </div>
+      {/* ── Hero Section ──────────────────────────────────────────────────── */}
+      <div style={{
+        background: 'linear-gradient(180deg, #0F172A 0%, #0D2137 50%, #0F172A 100%)',
+        padding: '16px 18px 24px',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        {/* Ambient glows */}
+        <div style={{
+          position: 'absolute', top: -60, right: -40, width: 200, height: 200,
+          background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)',
+          borderRadius: '50%', pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute', top: 40, left: -60, width: 160, height: 160,
+          background: 'radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%)',
+          borderRadius: '50%', pointerEvents: 'none',
+        }} />
+
+        {/* Greeting */}
+        <div style={{ position: 'relative', marginBottom: 4 }}>
+          <p style={{ fontSize: 13, color: '#94A3B8', margin: 0 }}>
+            {greeting}{userName ? `, ${userName}` : ''}
+          </p>
+          <p style={{ fontSize: 11, color: '#334155', margin: '2px 0 0' }}>
+            {new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </p>
+        </div>
+
+        {/* Score Hero */}
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          padding: '16px 0 8px', position: 'relative',
+        }}>
+          <p style={{
+            fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+            color: '#94A3B8', marginBottom: 12,
+          }}>
+            Tages-Score
+          </p>
 
           {scorePending ? (
-            <div className="flex flex-col items-center gap-3 py-2">
-              <div className="animate-pulse bg-[#F2F1EE] rounded-full w-[140px] h-[140px]" />
-              <div className="animate-pulse bg-[#F2F1EE] rounded-full h-5 w-20" />
-            </div>
-          ) : expanded ? (
-            <div className="w-full">
-              <div className="flex flex-col md:flex-row gap-6 items-start">
-                {/* Linke Spalte: ScoreCircle klein */}
-                <div className="flex justify-center w-full md:w-2/5">
-                  <ScoreCircle score={gesamtScore} small />
-                </div>
-
-                {/* Rechte Spalte: Handlungsschritte */}
-                <div className="w-full md:w-3/5">
-                  <p className="text-sm font-semibold text-[#1A1A1A] mb-3">Was heute zählt</p>
-                  {gesamtScore !== null && gesamtScore >= 90 ? (
-                    <p className="text-sm text-[#2D6A4F]">Sehr guter Tag bisher – weiter so!</p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {handlungsschritte.map((s, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm">
-                          <span
-                            className="mt-1.5 w-2 h-2 rounded-full shrink-0"
-                            style={{
-                              backgroundColor:
-                                s.typ === 'positiv' ? '#2D6A4F'
-                                : s.typ === 'warnung' ? '#B45309'
-                                : '#A8A8A8',
-                            }}
-                          />
-                          <span style={{
-                            color: s.typ === 'positiv' ? '#2D6A4F'
-                              : s.typ === 'info' ? '#6B6B6B'
-                              : '#1A1A1A',
-                          }}>
-                            {s.text}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <button
-                    onClick={e => { e.stopPropagation(); setExpanded(false) }}
-                    className="text-xs text-[#A8A8A8] hover:text-[#6B6B6B] mt-4"
-                  >
-                    ✕ Schließen
-                  </button>
-                </div>
-              </div>
-            </div>
+            <div style={{
+              width: 150, height: 150, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.04)', animation: 'pulse 2s infinite',
+            }} />
           ) : (
-            <div className="flex flex-col items-center">
-              <ScoreCircle score={gesamtScore} />
-              {gesamtScore !== null && gesamtScore < 90 && (
-                <p className="text-xs text-[#A8A8A8] mt-3">
-                  Tippe für Details & Handlungsschritte
-                </p>
-              )}
-            </div>
+            <ScoreRing score={gesamtScore} />
           )}
+
+          {/* Sub-scores */}
+          <div style={{ display: 'flex', gap: 28, marginTop: 16 }}>
+            {[
+              { label: 'Ernährung', val: ernScore, color: '#10B981' },
+              { label: 'Supplements', val: suppDisplayScore, color: '#6366F1' },
+            ].map(s => (
+              <div key={s.label} style={{ textAlign: 'center' }}>
+                <div style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: 18, fontWeight: 700, color: s.color,
+                }}>
+                  {s.val !== null ? s.val : '–'}
+                </div>
+                <div style={{ fontSize: 9, color: '#94A3B8', marginTop: 2 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* ── 2. Schnellübersicht ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3 mb-5">
+      {/* ── Cards ─────────────────────────────────────────────────────────── */}
+      <div style={{ padding: '0 14px' }}>
 
-        {/* Card A: Kalorien */}
-        <div
-          className="bg-white rounded-[14px] p-5 border border-[#E8E6E1] cursor-pointer hover:border-[#CFCCC5] transition-colors"
-          onClick={() => setPage('ernaehrung')}
-        >
-          <div className="mb-3">
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#F2F1EE] text-[#6B6B6B]">
-              Kalorien
-            </span>
+        {/* Kalorien + Supplements 2-col */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: -4 }}>
+
+          {/* Kalorien */}
+          <div
+            style={{ ...glassCard, cursor: 'pointer' }}
+            onClick={() => setPage('ernaehrung')}
+          >
+            <div style={{
+              position: 'absolute', top: -20, right: -20, width: 60, height: 60,
+              background: 'radial-gradient(circle, rgba(16,185,129,0.15), transparent)',
+              borderRadius: '50%',
+            }} />
+            <span style={{
+              display: 'inline-flex', alignItems: 'center',
+              fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999,
+              background: 'rgba(16,185,129,0.15)', color: '#10B981',
+              marginBottom: 10,
+            }}>Kalorien</span>
+
+            {loadingNutrition ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <Skeleton style={{ height: 28, width: '100%' }} />
+                <Skeleton style={{ height: 6, width: '100%' }} />
+                <Skeleton style={{ height: 14, width: '75%' }} />
+              </div>
+            ) : (
+              <>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 22, fontWeight: 700, color: '#F1F5F9' }}>
+                  {nutritionTotals.kcal}
+                </div>
+                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2, marginBottom: 8 }}>
+                  / {goals.kcal} kcal
+                </div>
+                <ProgressBar pct={kalorienPct} gradient={kalorienGrad} />
+                <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 6 }}>
+                  Protein {Math.round(nutritionTotals.protein)}g / {goals.protein}g
+                </div>
+              </>
+            )}
           </div>
-          {loadingNutrition ? (
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-1.5 w-full" />
-              <Skeleton className="h-4 w-3/4" />
+
+          {/* Supplements */}
+          <div
+            style={{ ...glassCard, cursor: 'pointer' }}
+            onClick={() => setPage('supplements')}
+          >
+            <div style={{
+              position: 'absolute', top: -20, right: -20, width: 60, height: 60,
+              background: 'radial-gradient(circle, rgba(99,102,241,0.15), transparent)',
+              borderRadius: '50%',
+            }} />
+            <span style={{
+              display: 'inline-flex', alignItems: 'center',
+              fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999,
+              background: 'rgba(99,102,241,0.15)', color: '#6366F1',
+              marginBottom: 10,
+            }}>Supplements</span>
+
+            {loadingSupplements ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <Skeleton style={{ height: 28, width: '100%' }} />
+                <Skeleton style={{ height: 14, width: '75%' }} />
+                <Skeleton style={{ height: 14, width: '50%' }} />
+              </div>
+            ) : supplements.length === 0 ? (
+              <p style={{ fontSize: 12, color: '#475569', lineHeight: 1.5 }}>Keine Supplements eingetragen</p>
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 22, fontWeight: 700, color: '#F1F5F9' }}>
+                    {takenToday}
+                  </span>
+                  <span style={{ fontSize: 13, color: '#94A3B8' }}>/ {faelligeHeute.length}</span>
+                </div>
+                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2, marginBottom: 8 }}>heute genommen</div>
+                <ProgressBar pct={faelligeHeute.length > 0 ? (takenToday / faelligeHeute.length) * 100 : 0} gradient={suppGrad} />
+                {faelligeHeute.length > takenToday && (
+                  <div style={{ fontSize: 10, color: '#F59E0B', marginTop: 6 }}>
+                    {faelligeHeute.length - takenToday} Supplement(s) ausstehend
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Supplement Checklist */}
+        {!loadingSupplements && faelligeHeute.length > 0 && (
+          <div style={{ ...glassCard, marginTop: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#F1F5F9' }}>Heutige Einnahme</span>
+              <span style={{
+                fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999,
+                background: 'rgba(99,102,241,0.15)', color: '#6366F1',
+                fontFamily: "'JetBrains Mono', monospace",
+              }}>
+                {takenToday}/{faelligeHeute.length}
+              </span>
             </div>
-          ) : (
-            <>
-              <div className="text-xl font-bold text-[#1A1A1A] leading-tight">
-                {nutritionTotals.kcal}
-                <span className="text-sm font-normal text-[#A8A8A8]"> / {goals.kcal}</span>
-              </div>
-              <div className="text-xs text-[#6B6B6B] mb-2">kcal heute</div>
-              <ProgressBar pct={kalorienPct} color={kalorienBarColor} />
-              <div className="text-xs text-[#A8A8A8] mt-2">
-                Protein {Math.round(nutritionTotals.protein)}g / {goals.protein}g
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Card B: Supplements */}
-        <div
-          className="bg-white rounded-[14px] p-5 border border-[#E8E6E1] cursor-pointer hover:border-[#CFCCC5] transition-colors"
-          onClick={() => setPage('supplements')}
-        >
-          <div className="mb-3">
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#F2F1EE] text-[#1D4ED8]">
-              Supplements
-            </span>
-          </div>
-          {loadingSupplements ? (
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-            </div>
-          ) : supplements.length === 0 ? (
-            <p className="text-xs text-[#A8A8A8] leading-relaxed">
-              Keine Supplements eingetragen
-            </p>
-          ) : (
-            <>
-              <div className="text-2xl font-bold text-[#1A1A1A] leading-tight">
-                {takenToday}
-                <span className="text-sm font-normal text-[#A8A8A8]"> / {faelligeHeute.length}</span>
-              </div>
-              <div className="text-sm text-[#6B6B6B] mt-1">heute genommen</div>
-              <div className="text-xs text-[#A8A8A8] mt-2">{suppHinweis}</div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ── 3. Nächste Arzttermine ────────────────────────────────────────── */}
-      <div className="bg-white rounded-[14px] p-5 border border-[#E8E6E1] mb-5">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-[#1A1A1A]">Nächste Arzttermine</h3>
-          <span className="text-xs text-[#A8A8A8]">7 Tage</span>
-        </div>
-
-        {loadingTermine ? (
-          <div className="space-y-2">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-4/5" />
-          </div>
-        ) : termine.length === 0 ? (
-          <p className="text-sm text-[#A8A8A8] py-1">
-            Keine Termine in den nächsten 7 Tagen
-          </p>
-        ) : (
-          <div className="space-y-0 mb-3">
-            {termine.map((t, idx) => (
+            {faelligeHeute.map((s, i) => (
               <div
-                key={t.id}
-                className={`flex items-start gap-3 py-2.5 ${
-                  idx < termine.length - 1 ? 'border-b border-[#F2F1EE]' : ''
-                }`}
+                key={s.id}
+                onClick={() => toggleSupplement(s)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '9px 0', cursor: 'pointer',
+                  borderTop: i > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                }}
               >
-                <span className="text-base leading-none mt-0.5 shrink-0">📅</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[#1A1A1A] truncate">{t.titel}</p>
-                  <p className="text-xs text-[#6B6B6B] mt-0.5">
-                    {formatTerminDate(t.datum)}
-                    {t.uhrzeit && <span className="ml-2">{t.uhrzeit} Uhr</span>}
-                  </p>
+                <div style={{
+                  width: 22, height: 22, borderRadius: 7, flexShrink: 0,
+                  border: s.heuteGenommen ? 'none' : '2px solid #334155',
+                  background: s.heuteGenommen ? 'linear-gradient(135deg, #6366F1, #8B5CF6)' : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all 0.3s cubic-bezier(.175,.885,.32,1.275)',
+                  transform: s.heuteGenommen ? 'scale(1)' : 'scale(0.9)',
+                  boxShadow: s.heuteGenommen ? '0 2px 8px rgba(99,102,241,0.3)' : 'none',
+                }}>
+                  {s.heuteGenommen && <span style={{ color: '#fff', fontSize: 12, lineHeight: 1 }}>✓</span>}
                 </div>
+                <div style={{ flex: 1 }}>
+                  <span style={{
+                    fontSize: 13, fontWeight: 600,
+                    color: s.heuteGenommen ? '#6366F1' : '#F1F5F9',
+                    textDecoration: s.heuteGenommen ? 'line-through' : 'none',
+                    transition: 'all 0.2s ease',
+                  }}>{s.name}</span>
+                  {s.dosis && (
+                    <span style={{ fontSize: 11, color: '#94A3B8', marginLeft: 6 }}>{s.dosis}</span>
+                  )}
+                </div>
+                <span style={{ fontSize: 10, color: '#94A3B8' }}>
+                  {ZEITPUNKT_LABELS[s.zeitpunkt_neu] || ''}
+                </span>
               </div>
             ))}
           </div>
         )}
 
-        {setPage && (
-          <button
-            onClick={() => setPage('arzttermine')}
-            className="text-sm text-[#2D6A4F] font-medium hover:underline mt-1"
-          >
-            Alle Termine →
-          </button>
+        {/* Nächste Arzttermine */}
+        <div style={{ ...glassCard, marginTop: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#F1F5F9' }}>Nächste Arzttermine</span>
+            <span style={{ fontSize: 10, color: '#94A3B8' }}>7 Tage</span>
+          </div>
+
+          {loadingTermine ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <Skeleton style={{ height: 44, width: '100%' }} />
+              <Skeleton style={{ height: 44, width: '80%' }} />
+            </div>
+          ) : termine.length === 0 ? (
+            <p style={{ fontSize: 13, color: '#475569' }}>Keine Termine in den nächsten 7 Tagen</p>
+          ) : (
+            <div>
+              {termine.map((t, idx) => (
+                <div
+                  key={t.id}
+                  style={{
+                    display: 'flex', gap: 12, padding: '10px 0',
+                    borderTop: idx > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                  }}
+                >
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+                    background: 'rgba(6,182,212,0.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#F1F5F9' }} className="truncate">{t.titel}</div>
+                    <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+                      {formatTerminDate(t.datum)}
+                      {t.uhrzeit && <span style={{ marginLeft: 8 }}>{t.uhrzeit} Uhr</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {setPage && (
+            <button
+              onClick={() => setPage('arzttermine')}
+              style={{
+                fontSize: 12, color: '#10B981', background: 'none', border: 'none',
+                cursor: 'pointer', marginTop: 8, padding: 0,
+              }}
+            >
+              Alle Termine →
+            </button>
+          )}
+        </div>
+
+        {/* Was heute zählt */}
+        {!scorePending && handlungsschritte.length > 0 && (
+          <div style={{ ...glassCard, marginTop: 10, marginBottom: 16 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#F1F5F9', display: 'block', marginBottom: 10 }}>
+              Was heute zählt
+            </span>
+            {handlungsschritte.map((s, i) => (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'flex-start', gap: 8,
+                marginTop: i > 0 ? 8 : 0,
+              }}>
+                <div style={{
+                  width: 6, height: 6, borderRadius: '50%', marginTop: 5, flexShrink: 0,
+                  background: s.typ === 'positiv' ? '#10B981' : s.typ === 'info' ? '#06B6D4' : '#F59E0B',
+                }} />
+                <span style={{
+                  fontSize: 12, lineHeight: 1.5,
+                  color: s.typ === 'positiv' ? '#10B981' : s.typ === 'info' ? '#94A3B8' : '#F1F5F9',
+                }}>{s.text}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {!scorePending && gesamtScore !== null && gesamtScore >= 90 && (
+          <div style={{ ...glassCard, marginTop: 10, marginBottom: 16 }}>
+            <p style={{ fontSize: 13, color: '#10B981', margin: 0 }}>Sehr guter Tag bisher – weiter so!</p>
+          </div>
         )}
       </div>
     </div>

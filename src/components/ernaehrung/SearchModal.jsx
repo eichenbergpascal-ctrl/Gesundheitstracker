@@ -1,13 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
-import { searchFoods, addFood, NUTRISCORE_COLORS, ALLERGEN_OPTIONS, checkIntolerances } from '../../services/foods'
+import { searchFoods, addFood, ALLERGEN_OPTIONS, checkIntolerances } from '../../services/foods'
 import NutriScoreBadge from './NutriScoreBadge'
-
-// Ansichten: 'search' | 'detail' | 'add'
 
 function NutritionPreview({ food, amount }) {
   const f = amount / 100
   return (
-    <div className="rounded-[10px] p-3 mb-4 grid grid-cols-4 gap-2 text-center" style={{ backgroundColor: '#F2F1EE' }}>
+    <div style={{
+      borderRadius: 10, padding: 12, marginBottom: 16,
+      display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+      gap: 8, textAlign: 'center',
+      background: 'rgba(255,255,255,0.04)',
+      border: '1px solid rgba(255,255,255,0.06)',
+    }}>
       {[
         { label: 'kcal',    val: Math.round((food.energie        ?? 0) * f) },
         { label: 'Protein', val: `${((food.protein       ?? 0) * f).toFixed(1)}g` },
@@ -15,12 +19,23 @@ function NutritionPreview({ food, amount }) {
         { label: 'Fett',    val: `${((food.fett          ?? 0) * f).toFixed(1)}g` },
       ].map(({ label, val }) => (
         <div key={label}>
-          <div className="text-sm font-bold text-[#1A1A1A]">{val}</div>
-          <div className="text-xs text-[#A8A8A8]">{label}</div>
+          <div style={{
+            fontSize: 14, fontWeight: 700, color: '#F1F5F9',
+            fontFamily: "'JetBrains Mono', monospace",
+          }}>{val}</div>
+          <div style={{ fontSize: 10, color: '#94A3B8' }}>{label}</div>
         </div>
       ))}
     </div>
   )
+}
+
+const inputStyle = {
+  padding: '10px 14px', fontSize: 13,
+  background: '#0F172A', border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 12, color: '#F1F5F9', outline: 'none',
+  fontFamily: "'Plus Jakarta Sans', sans-serif",
+  transition: 'border-color 0.2s',
 }
 
 export default function SearchModal({ mahlzeit, user, onClose, onAdd, userIntolerances = [] }) {
@@ -110,58 +125,81 @@ export default function SearchModal({ mahlzeit, user, onClose, onAdd, userIntole
   return (
     <div
       className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
-      style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
+      style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
     >
       <div className="absolute inset-0" onClick={onClose} />
-      <div
-        className="relative bg-white w-full md:max-w-md md:rounded-[14px] rounded-t-[14px] flex flex-col overflow-hidden border border-[#E8E6E1]"
-        style={{ maxHeight: '90vh' }}
-      >
-        {/* ── Header ─────────────────────────────────────────────────────────── */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-[#E8E6E1] shrink-0">
+      <div style={{
+        position: 'relative',
+        background: '#1E293B',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: '16px 16px 0 0',
+        width: '100%', maxWidth: 480,
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        maxHeight: '90vh',
+      }} className="md:rounded-[16px]">
+
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '16px', flexShrink: 0,
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}>
           <button
             onClick={goBack}
-            className="text-[#A8A8A8] hover:text-[#1A1A1A] text-xl leading-none w-6 transition-colors"
+            style={{
+              color: '#94A3B8', background: 'none', border: 'none',
+              cursor: 'pointer', fontSize: 20, lineHeight: 1, width: 24,
+            }}
           >
             {view !== 'search' ? '←' : '✕'}
           </button>
-          <div className="flex-1">
-            <p className="font-semibold text-[#1A1A1A] text-sm">
+          <div style={{ flex: 1 }}>
+            <p style={{ fontWeight: 600, color: '#F1F5F9', fontSize: 14, margin: 0 }}>
               {view === 'add' ? 'Neues Lebensmittel eintragen' : 'Lebensmittel hinzufügen'}
             </p>
-            <p className="text-xs text-[#A8A8A8]">{mahlzeit.label}</p>
+            <p style={{ fontSize: 11, color: '#94A3B8', margin: 0 }}>{mahlzeit.label}</p>
           </div>
         </div>
 
-        {/* ── Suchleiste ─────────────────────────────────────────────────────── */}
+        {/* Suchleiste */}
         {view === 'search' && (
-          <form onSubmit={handleSearch} className="flex gap-2 p-3 border-b border-[#E8E6E1] shrink-0">
+          <form onSubmit={handleSearch} style={{
+            display: 'flex', gap: 8, padding: 12, flexShrink: 0,
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+          }}>
             <input
               ref={inputRef}
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Lebensmittel suchen…"
-              className="flex-1 border border-[#E8E6E1] rounded-[10px] px-3 py-2 text-sm bg-[#FAFAF9] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
+              style={{ ...inputStyle, flex: 1 }}
+              onFocus={e => e.target.style.borderColor = '#10B981'}
+              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
             />
             <button
               type="submit"
               disabled={searching}
-              className="bg-[#2D6A4F] text-white text-sm px-4 py-2 rounded-[10px] hover:bg-[#235C42] disabled:opacity-50 transition-colors font-medium"
+              style={{
+                padding: '10px 16px', fontSize: 13, fontWeight: 600,
+                background: 'linear-gradient(135deg, #10B981, #06B6D4)',
+                color: '#fff', border: 'none', borderRadius: 12, cursor: 'pointer',
+                opacity: searching ? 0.6 : 1,
+              }}
             >
               {searching ? '…' : 'Suchen'}
             </button>
           </form>
         )}
 
-        {/* ── Inhalt ─────────────────────────────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Inhalt */}
+        <div style={{ flex: 1, overflowY: 'auto' }}>
 
-          {/* ══ SUCHANSICHT ══════════════════════════════════════════════════════ */}
+          {/* Suchansicht */}
           {view === 'search' && (
             <div>
               {!hasSearched && (
-                <div className="text-center py-10 text-[#A8A8A8]">
-                  <p className="text-sm">Nach Lebensmitteln suchen</p>
+                <div style={{ textAlign: 'center', padding: '40px 16px', color: '#475569' }}>
+                  <p style={{ fontSize: 14 }}>Nach Lebensmitteln suchen</p>
                 </div>
               )}
 
@@ -169,24 +207,35 @@ export default function SearchModal({ mahlzeit, user, onClose, onAdd, userIntole
                 <button
                   key={food.id}
                   onClick={() => { setSelected(food); setView('detail') }}
-                  className="w-full flex items-center gap-3 px-4 py-3 border-b border-[#E8E6E1] hover:bg-[#F2F1EE] transition-colors text-left"
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#1A1A1A] truncate">{food.name}</p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: '#F1F5F9', margin: 0 }} className="truncate">
+                      {food.name}
+                    </p>
                     {food.brand && (
-                      <p className="text-xs text-[#A8A8A8] truncate">{food.brand}</p>
+                      <p style={{ fontSize: 11, color: '#94A3B8', margin: 0 }} className="truncate">{food.brand}</p>
                     )}
-                    <p className="text-xs text-[#A8A8A8]">{food.energie} kcal · pro 100 g</p>
+                    <p style={{ fontSize: 11, color: '#94A3B8', margin: 0 }}>{food.energie} kcal · pro 100 g</p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                     <NutriScoreBadge grade={food.nutriscore} />
-                    <span className="text-xs text-[#CFCCC5]">›</span>
+                    <span style={{ color: '#475569', fontSize: 16 }}>›</span>
                   </div>
                 </button>
               ))}
 
               {searchErr && (
-                <p className="text-sm text-[#A8A8A8] text-center pt-6 pb-2">{searchErr}</p>
+                <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '24px 16px 8px' }}>
+                  {searchErr}
+                </p>
               )}
 
               {hasSearched && (
@@ -195,49 +244,53 @@ export default function SearchModal({ mahlzeit, user, onClose, onAdd, userIntole
                     setAddForm(f => ({ ...f, name: query }))
                     setView('add')
                   }}
-                  className="w-full flex items-center gap-2 px-4 py-4 text-sm text-[#2D6A4F] hover:bg-[#E8F0EC] transition-colors border-t border-[#E8E6E1] mt-2"
+                  style={{
+                    width: '100%', padding: '16px', fontSize: 13, color: '#10B981',
+                    background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+                    borderTop: '1px solid rgba(255,255,255,0.06)',
+                  }}
                 >
-                  <span>Nicht gefunden? <strong>Lebensmittel hinzufügen</strong></span>
+                  Nicht gefunden? <strong>Lebensmittel hinzufügen</strong>
                 </button>
               )}
             </div>
           )}
 
-          {/* ══ DETAILANSICHT ════════════════════════════════════════════════════ */}
+          {/* Detailansicht */}
           {view === 'detail' && selected && (
-            <div className="p-4">
-              <div className="flex items-start gap-3 mb-5">
-                <div
-                  className="w-12 h-12 rounded-[10px] shrink-0"
-                  style={{ backgroundColor: '#E8F0EC' }}
-                />
+            <div style={{ padding: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 20 }}>
+                <div style={{
+                  width: 48, height: 48, borderRadius: 10, flexShrink: 0,
+                  background: 'rgba(16,185,129,0.1)',
+                }} />
                 <div>
-                  <p className="font-semibold text-[#1A1A1A] text-sm">{selected.name}</p>
+                  <p style={{ fontWeight: 600, color: '#F1F5F9', fontSize: 14, margin: 0 }}>{selected.name}</p>
                   {selected.brand && (
-                    <p className="text-xs text-[#A8A8A8]">{selected.brand}</p>
+                    <p style={{ fontSize: 11, color: '#94A3B8', margin: 0 }}>{selected.brand}</p>
                   )}
                   {selected.nutriscore && (
-                    <div className="mt-1">
-                      <NutriScoreBadge grade={selected.nutriscore} />
-                    </div>
+                    <div style={{ marginTop: 4 }}><NutriScoreBadge grade={selected.nutriscore} /></div>
                   )}
                   {!selected.created_by && (
-                    <span className="text-xs text-[#A8A8A8] mt-0.5 block">System-Datenbank</span>
+                    <span style={{ fontSize: 11, color: '#475569', display: 'block', marginTop: 2 }}>System-Datenbank</span>
                   )}
                 </div>
               </div>
 
-              <label className="text-xs text-[#6B6B6B] mb-2 block">Menge in Gramm</label>
-              <div className="flex gap-2 mb-4 flex-wrap">
+              <label style={{ fontSize: 12, color: '#94A3B8', marginBottom: 8, display: 'block' }}>Menge in Gramm</label>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
                 {[50, 100, 150, 200].map(g => (
                   <button
                     key={g}
                     onClick={() => setAmount(g)}
-                    className={`px-3 py-1.5 rounded-[10px] text-sm font-medium border transition-all ${
-                      amount === g
-                        ? 'bg-[#2D6A4F] text-white border-[#2D6A4F]'
-                        : 'border-[#E8E6E1] text-[#6B6B6B] hover:border-[#CFCCC5]'
-                    }`}
+                    style={{
+                      padding: '8px 12px', borderRadius: 10, fontSize: 13, fontWeight: 500,
+                      border: amount === g ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                      background: amount === g ? 'linear-gradient(135deg, #10B981, #06B6D4)' : 'transparent',
+                      color: amount === g ? '#fff' : '#94A3B8', cursor: 'pointer',
+                      transition: 'all 0.15s',
+                    }}
                   >
                     {g}g
                   </button>
@@ -246,16 +299,20 @@ export default function SearchModal({ mahlzeit, user, onClose, onAdd, userIntole
                   type="number" min="1" max="5000"
                   value={amount}
                   onChange={e => setAmount(Number(e.target.value))}
-                  className="w-20 border border-[#E8E6E1] rounded-[10px] px-3 py-1.5 text-sm bg-[#FAFAF9] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
+                  style={{ ...inputStyle, width: 72 }}
                 />
               </div>
 
               <NutritionPreview food={selected} amount={amount} />
 
               {selected.allergene?.length > 0 && (
-                <div className="mb-4 flex flex-wrap gap-1">
+                <div style={{ marginBottom: 16, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {selected.allergene.map(a => (
-                    <span key={a} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#FEE2E2', color: '#991B1B', border: '1px solid #FECACA' }}>
+                    <span key={a} style={{
+                      fontSize: 11, padding: '3px 8px', borderRadius: 999,
+                      background: 'rgba(239,68,68,0.12)', color: '#EF4444',
+                      border: '1px solid rgba(239,68,68,0.2)',
+                    }}>
                       {a}
                     </span>
                   ))}
@@ -263,28 +320,37 @@ export default function SearchModal({ mahlzeit, user, onClose, onAdd, userIntole
               )}
 
               {intoleranceWarnings.length > 0 ? (
-                <div className="rounded-[12px] border-2 border-[#F59E0B] bg-[#FFFBEB] p-4 mb-1">
-                  <p className="text-sm font-semibold text-[#92400E] mb-2">
+                <div style={{
+                  borderRadius: 12, border: '2px solid rgba(245,158,11,0.3)',
+                  background: 'rgba(245,158,11,0.08)', padding: 16, marginBottom: 4,
+                }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#F59E0B', marginBottom: 8, marginTop: 0 }}>
                     Unverträglichkeit erkannt
                   </p>
-                  <ul className="mb-3 space-y-1">
+                  <ul style={{ marginBottom: 12, padding: 0, listStyle: 'none' }}>
                     {intoleranceWarnings.map(w => (
-                      <li key={w} className="text-sm text-[#92400E] flex items-start gap-1.5">
-                        <span className="mt-0.5 shrink-0">⚠</span>
+                      <li key={w} style={{ fontSize: 13, color: '#F59E0B', marginBottom: 4 }}>
                         Dieses Produkt kann <strong>{w}</strong> enthalten.
                       </li>
                     ))}
                   </ul>
-                  <div className="flex gap-2">
+                  <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       onClick={() => setIntoleranceWarnings([])}
-                      className="flex-1 py-2.5 rounded-[10px] border border-[#E8E6E1] text-sm text-[#6B6B6B] bg-white hover:border-[#CFCCC5] transition-colors"
+                      style={{
+                        flex: 1, padding: '10px', borderRadius: 10, fontSize: 13,
+                        border: '1px solid rgba(255,255,255,0.08)', background: 'transparent',
+                        color: '#94A3B8', cursor: 'pointer',
+                      }}
                     >
                       Abbrechen
                     </button>
                     <button
                       onClick={handleConfirmAnyway}
-                      className="flex-1 py-2.5 rounded-[10px] bg-[#B45309] text-white text-sm font-medium hover:bg-[#92400E] transition-colors"
+                      style={{
+                        flex: 1, padding: '10px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                        background: '#B45309', color: '#fff', border: 'none', cursor: 'pointer',
+                      }}
                     >
                       Trotzdem hinzufügen
                     </button>
@@ -293,7 +359,12 @@ export default function SearchModal({ mahlzeit, user, onClose, onAdd, userIntole
               ) : (
                 <button
                   onClick={handleConfirm}
-                  className="w-full bg-[#2D6A4F] text-white font-semibold py-3 rounded-[10px] hover:bg-[#235C42] transition-colors"
+                  style={{
+                    width: '100%', padding: '14px', fontSize: 14, fontWeight: 600,
+                    background: 'linear-gradient(135deg, #10B981, #06B6D4)',
+                    color: '#fff', border: 'none', borderRadius: 12, cursor: 'pointer',
+                    boxShadow: '0 2px 10px rgba(16,185,129,0.3)',
+                  }}
                 >
                   Hinzufügen zu {mahlzeit.label}
                 </button>
@@ -301,53 +372,50 @@ export default function SearchModal({ mahlzeit, user, onClose, onAdd, userIntole
             </div>
           )}
 
-          {/* ══ HINZUFÜGEN-FORMULAR ══════════════════════════════════════════════ */}
+          {/* Hinzufügen-Formular */}
           {view === 'add' && (
-            <form onSubmit={handleSaveNew} className="p-4 space-y-3 pb-8">
-              {/* Community-Hinweis */}
-              <div className="rounded-[10px] px-3 py-2.5 text-xs text-center" style={{ backgroundColor: '#E8F0EC', color: '#2D6A4F' }}>
+            <form onSubmit={handleSaveNew} style={{ padding: 16, paddingBottom: 32, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{
+                borderRadius: 10, padding: '10px 12px', fontSize: 12, textAlign: 'center',
+                background: 'rgba(16,185,129,0.08)', color: '#10B981',
+                border: '1px solid rgba(16,185,129,0.15)',
+              }}>
                 Dieses Lebensmittel wird für <strong>alle Nutzer</strong> dauerhaft gespeichert.
               </div>
 
-              <div>
-                <label className="text-xs text-[#6B6B6B] mb-1 block">Name *</label>
-                <input
-                  value={addForm.name}
-                  onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="z.B. Haferflocken (zart)"
-                  required
-                  className="w-full border border-[#E8E6E1] rounded-[10px] px-3 py-2 text-sm bg-[#FAFAF9] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-[#6B6B6B] mb-1 block">Marke (optional)</label>
-                <input
-                  value={addForm.brand}
-                  onChange={e => setAddForm(f => ({ ...f, brand: e.target.value }))}
-                  placeholder="z.B. Kölln, Nestlé …"
-                  className="w-full border border-[#E8E6E1] rounded-[10px] px-3 py-2 text-sm bg-[#FAFAF9] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs text-[#6B6B6B] mb-1 block">Kalorien * (kcal / 100 g)</label>
+              {[
+                { key: 'name', label: 'Name *', placeholder: 'z.B. Haferflocken (zart)', required: true },
+                { key: 'brand', label: 'Marke (optional)', placeholder: 'z.B. Kölln, Nestlé …', required: false },
+              ].map(({ key, label, placeholder, required }) => (
+                <div key={key}>
+                  <label style={{ fontSize: 11, color: '#94A3B8', marginBottom: 5, display: 'block' }}>{label}</label>
                   <input
-                    type="number" min="0" step="1"
-                    value={addForm.energie}
+                    value={addForm[key]} placeholder={placeholder} required={required}
+                    onChange={e => setAddForm(f => ({ ...f, [key]: e.target.value }))}
+                    style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' }}
+                    onFocus={e => e.target.style.borderColor = '#10B981'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                  />
+                </div>
+              ))}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: '#94A3B8', marginBottom: 5, display: 'block' }}>Kalorien * (kcal/100g)</label>
+                  <input
+                    type="number" min="0" step="1" value={addForm.energie} placeholder="z.B. 372" required
                     onChange={e => setAddForm(f => ({ ...f, energie: e.target.value }))}
-                    placeholder="z.B. 372"
-                    required
-                    className="w-full border border-[#E8E6E1] rounded-[10px] px-3 py-2 text-sm bg-[#FAFAF9] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
+                    style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' }}
+                    onFocus={e => e.target.style.borderColor = '#10B981'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-[#6B6B6B] mb-1 block">NutriScore</label>
+                  <label style={{ fontSize: 11, color: '#94A3B8', marginBottom: 5, display: 'block' }}>NutriScore</label>
                   <select
                     value={addForm.nutriscore}
                     onChange={e => setAddForm(f => ({ ...f, nutriscore: e.target.value }))}
-                    className="w-full border border-[#E8E6E1] rounded-[10px] px-3 py-2 text-sm bg-[#FAFAF9] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
+                    style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' }}
                   >
                     <option value="">– unbekannt –</option>
                     {['a','b','c','d','e'].map(s => (
@@ -357,44 +425,44 @@ export default function SearchModal({ mahlzeit, user, onClose, onAdd, userIntole
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                 {[
-                  ['protein',       'Protein (g)'],
+                  ['protein', 'Protein (g)'],
                   ['kohlenhydrate', 'Kohlen. (g)'],
-                  ['fett',          'Fett (g)'],
+                  ['fett', 'Fett (g)'],
                 ].map(([key, label]) => (
                   <div key={key}>
-                    <label className="text-xs text-[#6B6B6B] mb-1 block">{label}</label>
+                    <label style={{ fontSize: 11, color: '#94A3B8', marginBottom: 5, display: 'block' }}>{label}</label>
                     <input
-                      type="number" min="0" step="0.1"
-                      value={addForm[key]}
+                      type="number" min="0" step="0.1" value={addForm[key]} placeholder="0"
                       onChange={e => setAddForm(f => ({ ...f, [key]: e.target.value }))}
-                      placeholder="0"
-                      className="w-full border border-[#E8E6E1] rounded-[10px] px-3 py-2 text-sm bg-[#FAFAF9] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
+                      style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' }}
+                      onFocus={e => e.target.style.borderColor = '#10B981'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                     />
                   </div>
                 ))}
               </div>
 
               <details>
-                <summary className="text-xs text-[#A8A8A8] cursor-pointer hover:text-[#6B6B6B] select-none py-1">
+                <summary style={{ fontSize: 11, color: '#475569', cursor: 'pointer', padding: '4px 0' }}>
                   + Weitere Nährwerte (optional)
                 </summary>
-                <div className="grid grid-cols-2 gap-2 mt-2">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
                   {[
                     ['gesaettigte_fettsaeuren', 'Ges. Fettsäuren (g)'],
-                    ['zucker',                  'Zucker (g)'],
-                    ['ballaststoffe',            'Ballaststoffe (g)'],
-                    ['salz',                     'Salz (g)'],
+                    ['zucker', 'Zucker (g)'],
+                    ['ballaststoffe', 'Ballaststoffe (g)'],
+                    ['salz', 'Salz (g)'],
                   ].map(([key, label]) => (
                     <div key={key}>
-                      <label className="text-xs text-[#6B6B6B] mb-1 block">{label}</label>
+                      <label style={{ fontSize: 11, color: '#94A3B8', marginBottom: 5, display: 'block' }}>{label}</label>
                       <input
-                        type="number" min="0" step="0.01"
-                        value={addForm[key]}
+                        type="number" min="0" step="0.01" value={addForm[key]} placeholder="0"
                         onChange={e => setAddForm(f => ({ ...f, [key]: e.target.value }))}
-                        placeholder="0"
-                        className="w-full border border-[#E8E6E1] rounded-[10px] px-3 py-2 text-sm bg-[#FAFAF9] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]"
+                        style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' }}
+                        onFocus={e => e.target.style.borderColor = '#10B981'}
+                        onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                       />
                     </div>
                   ))}
@@ -402,19 +470,18 @@ export default function SearchModal({ mahlzeit, user, onClose, onAdd, userIntole
               </details>
 
               <div>
-                <label className="text-xs text-[#6B6B6B] mb-2 block">Allergene</label>
-                <div className="flex flex-wrap gap-1.5">
+                <label style={{ fontSize: 11, color: '#94A3B8', marginBottom: 8, display: 'block' }}>Allergene</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {ALLERGEN_OPTIONS.map(a => (
                     <button
-                      key={a}
-                      type="button"
-                      onClick={() => toggleAllergen(a)}
-                      className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
-                        addForm.allergene.includes(a)
-                          ? 'border-[#FECACA] text-[#991B1B]'
-                          : 'border-[#E8E6E1] text-[#6B6B6B] hover:border-[#CFCCC5]'
-                      }`}
-                      style={addForm.allergene.includes(a) ? { backgroundColor: '#FEE2E2' } : {}}
+                      key={a} type="button" onClick={() => toggleAllergen(a)}
+                      style={{
+                        fontSize: 11, padding: '4px 10px', borderRadius: 999,
+                        border: addForm.allergene.includes(a) ? '1px solid rgba(239,68,68,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                        background: addForm.allergene.includes(a) ? 'rgba(239,68,68,0.12)' : 'transparent',
+                        color: addForm.allergene.includes(a) ? '#EF4444' : '#94A3B8',
+                        cursor: 'pointer', transition: 'all 0.15s',
+                      }}
                     >
                       {a}
                     </button>
@@ -423,19 +490,27 @@ export default function SearchModal({ mahlzeit, user, onClose, onAdd, userIntole
               </div>
 
               {saveErr && (
-                <p className="text-xs rounded-[10px] px-3 py-2" style={{ color: '#991B1B', backgroundColor: '#FEE2E2' }}>{saveErr}</p>
+                <p style={{
+                  fontSize: 12, borderRadius: 10, padding: '10px 12px',
+                  color: '#EF4444', background: 'rgba(239,68,68,0.1)',
+                  border: '1px solid rgba(239,68,68,0.2)',
+                }}>{saveErr}</p>
               )}
 
               <button
                 type="submit"
                 disabled={saving || !addForm.name.trim() || !addForm.energie}
-                className="w-full bg-[#2D6A4F] text-white font-semibold py-3 rounded-[10px] hover:bg-[#235C42] disabled:opacity-50 transition-colors"
+                style={{
+                  padding: '14px', fontSize: 14, fontWeight: 600,
+                  background: 'linear-gradient(135deg, #10B981, #06B6D4)',
+                  color: '#fff', border: 'none', borderRadius: 12, cursor: 'pointer',
+                  opacity: (saving || !addForm.name.trim() || !addForm.energie) ? 0.5 : 1,
+                }}
               >
                 {saving ? 'Wird gespeichert…' : 'Lebensmittel für alle hinzufügen'}
               </button>
             </form>
           )}
-
         </div>
       </div>
     </div>

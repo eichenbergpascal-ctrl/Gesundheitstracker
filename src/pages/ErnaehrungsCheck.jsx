@@ -9,6 +9,15 @@ import MahlzeitSection from '../components/ernaehrung/MahlzeitSection'
 import SearchModal from '../components/ernaehrung/SearchModal'
 import ZieleEditor from '../components/ernaehrung/ZieleEditor'
 
+const glass = {
+  background: 'rgba(255,255,255,0.05)',
+  backdropFilter: 'blur(20px)',
+  WebkitBackdropFilter: 'blur(20px)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 16,
+  padding: 20,
+}
+
 export default function ErnaehrungsCheck({ user }) {
   const [selectedDate, setSelectedDate] = useState(todayKey())
   const [log, setLog] = useState(logCache[todayKey()] ?? [])
@@ -33,11 +42,7 @@ export default function ErnaehrungsCheck({ user }) {
     }
     setLoadingLog(true)
     supabase
-      .from('nutrition_log')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('date', selectedDate)
-      .maybeSingle()
+      .from('nutrition_log').select('*').eq('user_id', user.id).eq('date', selectedDate).maybeSingle()
       .then(({ data }) => {
         const items = data?.items ?? []
         logCache[selectedDate] = items
@@ -57,9 +62,7 @@ export default function ErnaehrungsCheck({ user }) {
     setLog(newLog)
     setDbError(null)
     const { error } = await supabase.from('nutrition_log').upsert({
-      user_id: user.id,
-      date: selectedDate,
-      items: newLog,
+      user_id: user.id, date: selectedDate, items: newLog,
     }, { onConflict: 'user_id,date' })
     if (error) {
       logCache[selectedDate] = previous
@@ -86,80 +89,132 @@ export default function ErnaehrungsCheck({ user }) {
   function handlePrevDay() { if (canGoPrev) setSelectedDate(d => offsetDate(new Date(d), -1)) }
   function handleNextDay() { if (canGoNext) setSelectedDate(d => offsetDate(new Date(d), 1)) }
 
-  const navBtnClass = (enabled) =>
-    `w-8 h-8 rounded-full flex items-center justify-center transition-colors text-base font-bold ${
-      enabled
-        ? 'bg-[#F2F1EE] text-[#6B6B6B] hover:bg-[#E8E6E1]'
-        : 'bg-[#F2F1EE] text-[#CFCCC5] cursor-not-allowed'
-    }`
+  const navBtnStyle = (enabled) => ({
+    width: 32, height: 32, borderRadius: '50%', border: 'none',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: enabled ? 'pointer' : 'not-allowed',
+    background: enabled ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
+    color: enabled ? '#94A3B8' : '#334155',
+    fontSize: 16, fontWeight: 700, transition: 'background 0.2s',
+  })
 
   return (
-    <div className="px-4 py-5 md:px-8 md:py-7 max-w-5xl mx-auto w-full pb-24 md:pb-6">
-      {dbError && (
-        <div className="mb-4 px-4 py-2.5 rounded-[10px] bg-red-50 border border-red-200 flex items-center justify-between">
-          <span className="text-sm text-[#991B1B]">{dbError}</span>
-          <button onClick={() => setDbError(null)} className="text-[#991B1B] text-lg leading-none ml-3">×</button>
-        </div>
-      )}
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-3">
-          <button onClick={handlePrevDay} disabled={!canGoPrev} className={navBtnClass(canGoPrev)} aria-label="Vorheriger Tag">‹</button>
-          <div className="text-center min-w-0">
-            <h1 className="text-xl font-bold text-[#1A1A1A] leading-none">{dayLabel(selectedDate)}</h1>
-            <p className="text-xs text-[#A8A8A8] mt-0.5">{formatDate(selectedDate)}</p>
-          </div>
-          <button onClick={handleNextDay} disabled={!canGoNext} className={navBtnClass(canGoNext)} aria-label="Nächster Tag">›</button>
-        </div>
-        <button
-          onClick={() => setShowZiele(true)}
-          className="text-xs text-[#6B6B6B] hover:text-[#2D6A4F] transition-colors"
-        >
-          Ziele anpassen
-        </button>
-      </div>
+    <div style={{ background: '#0F172A', minHeight: '100%' }}>
 
-      {loadingLog ? (
-        <div className="flex items-center justify-center py-16 text-[#A8A8A8]">
-          <p className="text-sm">Lädt…</p>
-        </div>
-      ) : (
-        <>
-          <div className="bg-white rounded-[14px] border border-[#E8E6E1] p-5 mb-4">
-            <div className="flex flex-col items-center mb-5">
-              <CalorieRing consumed={totals.kcal} goal={goals.kcal} />
-              <div className="flex gap-4 mt-3">
-                <div className="flex items-center gap-1.5 text-xs text-[#6B6B6B]">
-                  <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#2D6A4F' }} />
-                  Gegessen
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-[#6B6B6B]">
-                  <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: '#E8E6E1' }} />
-                  Verbleibend
-                </div>
-              </div>
+      {/* Header-Band mit Gradient */}
+      <div style={{
+        background: 'linear-gradient(180deg, #0F172A 0%, #0D2137 60%, #0F172A 100%)',
+        padding: '0 18px 24px',
+      }}>
+        {/* Datum-Navigation */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={handlePrevDay} disabled={!canGoPrev} style={navBtnStyle(canGoPrev)} aria-label="Vorheriger Tag">‹</button>
+            <div style={{ textAlign: 'center', minWidth: 0 }}>
+              <h1 style={{ fontSize: 18, fontWeight: 700, color: '#F1F5F9', margin: 0, lineHeight: 1 }}>
+                {dayLabel(selectedDate)}
+              </h1>
+              <p style={{ fontSize: 11, color: '#94A3B8', margin: '2px 0 0' }}>{formatDate(selectedDate)}</p>
             </div>
-            <div className="space-y-3">
-              {MACRO_CONFIG.map(m => (
-                <MacroBar key={m.key} label={m.label} consumed={totals[m.key]} goal={goals[m.key]} color={m.color} />
+            <button onClick={handleNextDay} disabled={!canGoNext} style={navBtnStyle(canGoNext)} aria-label="Nächster Tag">›</button>
+          </div>
+          <button
+            onClick={() => setShowZiele(true)}
+            style={{ fontSize: 12, color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            Ziele anpassen
+          </button>
+        </div>
+
+        {dbError && (
+          <div style={{
+            marginBottom: 12, padding: '10px 14px', borderRadius: 10,
+            background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <span style={{ fontSize: 13, color: '#EF4444' }}>{dbError}</span>
+            <button onClick={() => setDbError(null)} style={{ color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
+          </div>
+        )}
+
+        {/* Kalorie Ring Hero */}
+        {!loadingLog && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <CalorieRing consumed={totals.kcal} goal={goals.kcal} />
+            <div style={{ display: 'flex', gap: 20, marginTop: 12 }}>
+              {[
+                { label: 'Gegessen', color: '#10B981' },
+                { label: 'Verbleibend', color: 'rgba(255,255,255,0.15)' },
+              ].map(l => (
+                <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.color }} />
+                  <span style={{ fontSize: 10, color: '#94A3B8' }}>{l.label}</span>
+                </div>
               ))}
             </div>
           </div>
+        )}
+      </div>
 
-          <div className="space-y-3">
-            {MAHLZEITEN.map(mz => (
-              <MahlzeitSection
-                key={mz.id} mahlzeit={mz}
-                items={log.filter(i => (i.mahlzeit || 'snacks') === mz.id)}
-                onAdd={() => setSearchModal(mz)}
-                onRemove={handleRemove}
-              />
-            ))}
+      {/* Content */}
+      <div style={{ padding: '0 14px 80px' }}>
+
+        {loadingLog ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '64px 0', color: '#475569' }}>
+            <p style={{ fontSize: 14 }}>Lädt…</p>
           </div>
-        </>
-      )}
+        ) : (
+          <>
+            {/* Makros */}
+            <div style={{
+              ...glass,
+              marginBottom: 12,
+            }}>
+              <p style={{
+                fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+                color: '#94A3B8', marginBottom: 14, marginTop: 0,
+              }}>
+                Makronährstoffe
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {MACRO_CONFIG.map(m => (
+                  <MacroBar key={m.key} label={m.label} consumed={totals[m.key]} goal={goals[m.key]} color={m.color} />
+                ))}
+              </div>
+            </div>
 
-      {searchModal && <SearchModal mahlzeit={searchModal} user={user} onClose={() => setSearchModal(null)} onAdd={handleAdd} userIntolerances={settings.foodIntolerances} />}
-      {showZiele && <ZieleEditor goals={goals} onSave={handleSaveGoals} onClose={() => setShowZiele(false)} />}
+            {/* Mahlzeiten */}
+            <p style={{
+              fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+              color: '#94A3B8', marginBottom: 10, marginTop: 4,
+            }}>
+              Mahlzeiten
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {MAHLZEITEN.map(mz => (
+                <MahlzeitSection
+                  key={mz.id} mahlzeit={mz}
+                  items={log.filter(i => (i.mahlzeit || 'snacks') === mz.id)}
+                  onAdd={() => setSearchModal(mz)}
+                  onRemove={handleRemove}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {searchModal && (
+        <SearchModal
+          mahlzeit={searchModal} user={user}
+          onClose={() => setSearchModal(null)}
+          onAdd={handleAdd}
+          userIntolerances={settings.foodIntolerances}
+        />
+      )}
+      {showZiele && (
+        <ZieleEditor goals={goals} onSave={handleSaveGoals} onClose={() => setShowZiele(false)} />
+      )}
     </div>
   )
 }

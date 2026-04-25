@@ -41,10 +41,10 @@ function calcBMI(groesse, gewicht) {
 }
 
 function bmiInfo(bmi) {
-  if (bmi < 18.5) return { label: 'Untergewicht', color: '#B45309' }
-  if (bmi < 25)   return { label: 'Normalgewicht', color: '#2D6A4F' }
-  if (bmi < 30)   return { label: 'Übergewicht',   color: '#B45309' }
-  return               { label: 'Adipositas',       color: '#991B1B' }
+  if (bmi < 18.5) return { label: 'Untergewicht', color: '#F59E0B' }
+  if (bmi < 25)   return { label: 'Normalgewicht', color: '#10B981' }
+  if (bmi < 30)   return { label: 'Übergewicht',   color: '#F59E0B' }
+  return               { label: 'Adipositas',       color: '#EF4444' }
 }
 
 function calcKalorienbedarf(local) {
@@ -64,55 +64,52 @@ function calcKalorienbedarf(local) {
   return Math.round(grundumsatz * (faktoren[aktivitaet] ?? 1.375))
 }
 
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
+const glass = {
+  background: 'rgba(255,255,255,0.05)',
+  backdropFilter: 'blur(20px)',
+  WebkitBackdropFilter: 'blur(20px)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 16,
+  padding: 20,
+}
+
+const inputStyle = {
+  width: '100%', padding: '10px 12px', fontSize: 13,
+  background: '#0F172A', border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 10, color: '#F1F5F9', outline: 'none',
+  boxSizing: 'border-box',
+}
+
+const sectionLabel = {
+  fontSize: 10, fontWeight: 700, letterSpacing: '0.1em',
+  textTransform: 'uppercase', color: '#94A3B8',
+  marginBottom: 16, marginTop: 0,
+}
+
 // ─── Skeleton ───────────────────────────────────────────────────────────────
 
 function SectionSkeleton() {
   return (
-    <div className="bg-white rounded-[14px] p-5 border border-[#E8E6E1] animate-pulse">
-      <div className="h-3.5 bg-[#F2F1EE] rounded w-1/3 mb-4" />
-      <div className="space-y-3">
-        <div className="h-9 bg-[#F2F1EE] rounded-[10px]" />
-        <div className="grid grid-cols-2 gap-3">
-          <div className="h-9 bg-[#F2F1EE] rounded-[10px]" />
-          <div className="h-9 bg-[#F2F1EE] rounded-[10px]" />
+    <div style={{ ...glass, background: 'rgba(255,255,255,0.03)' }}>
+      <div style={{ height: 12, background: 'rgba(255,255,255,0.06)', borderRadius: 6, width: '33%', marginBottom: 16 }} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ height: 38, background: 'rgba(255,255,255,0.06)', borderRadius: 10 }} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div style={{ height: 38, background: 'rgba(255,255,255,0.06)', borderRadius: 10 }} />
+          <div style={{ height: 38, background: 'rgba(255,255,255,0.06)', borderRadius: 10 }} />
         </div>
       </div>
     </div>
   )
 }
 
-// ─── Wiederverwendbare Komponenten ───────────────────────────────────────────
-
-function SectionCard({ title, children }) {
-  return (
-    <div className="bg-white rounded-[14px] p-5 border border-[#E8E6E1]">
-      <h2 className="text-sm font-semibold text-[#1A1A1A] uppercase tracking-wide mb-4">
-        {title}
-      </h2>
-      {children}
-    </div>
-  )
-}
-
-function InputField({ label, children }) {
-  return (
-    <div>
-      <label className="text-xs text-[#6B6B6B] mb-1 block">{label}</label>
-      {children}
-    </div>
-  )
-}
-
-const inputCls =
-  'w-full border border-[#E8E6E1] rounded-[10px] px-3 py-2 text-sm bg-white ' +
-  'text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]'
-
 // ─── Hauptkomponente ────────────────────────────────────────────────────────
 
 export default function Profil({ user }) {
   const { settings, updateSettings, loading } = useUserSettings(user.id)
 
-  // Lokaler Formular-State (verhindert Supabase-Aufruf bei jedem Tastendruck)
   const [local, setLocal] = useState({
     geschlecht: '', geburtsdatum: '', groesse: '', gewicht: '',
     aktivitaet: 'maessig', ernaehrungsweise: 'keine',
@@ -121,7 +118,6 @@ export default function Profil({ user }) {
   const kcalTimerRef = useRef(null)
   useEffect(() => () => clearTimeout(kcalTimerRef.current), [])
 
-  // Einmalig synchronisieren, sobald settings geladen sind
   useEffect(() => {
     if (!loading) {
       setLocal({
@@ -133,15 +129,13 @@ export default function Profil({ user }) {
         ernaehrungsweise: settings.ernaehrungsweise ?? 'keine',
       })
     }
-  }, [loading]) // bewusst nur auf loading-Übergang reagieren
+  }, [loading])
 
-  // Sofort-Speichern für Button-Felder (geschlecht, aktivitaet, ernaehrungsweise)
   function saveNow(updates) {
     setLocal(p => ({ ...p, ...updates }))
     updateSettings(updates)
   }
 
-  // Blur-Speichern für numerische / Datumsfelder
   function saveOnBlur(key, rawValue) {
     const numKeys = ['groesse', 'gewicht']
     const value = numKeys.includes(key)
@@ -150,7 +144,6 @@ export default function Profil({ user }) {
     updateSettings({ [key]: value })
   }
 
-  // Allergie-Toggle (identisch zu AllergieRadar)
   function toggleAllergie(id) {
     const next = settings.selectedAllergies.includes(id)
       ? settings.selectedAllergies.filter(a => a !== id)
@@ -158,7 +151,6 @@ export default function Profil({ user }) {
     updateSettings({ selectedAllergies: next })
   }
 
-  // Unverträglichkeits-Toggle
   function toggleUnvertraeglichkeit(id) {
     const next = settings.foodIntolerances.includes(id)
       ? settings.foodIntolerances.filter(a => a !== id)
@@ -166,7 +158,6 @@ export default function Profil({ user }) {
     updateSettings({ foodIntolerances: next })
   }
 
-  // Kalorienbedarf als Ernährungsziel übernehmen
   async function handleKcalOvernehmen() {
     if (!kalorienbedarf) return
     await updateSettings({
@@ -177,77 +168,208 @@ export default function Profil({ user }) {
     kcalTimerRef.current = setTimeout(() => setKcalSaved(false), 2000)
   }
 
-  // ── Abgeleitete Werte ──────────────────────────────────────────────────────
   const alter = calcAge(local.geburtsdatum)
   const bmi = calcBMI(local.groesse, local.gewicht)
   const bmiMeta = bmi !== null ? bmiInfo(bmi) : null
   const kalorienbedarf = useMemo(() => calcKalorienbedarf(local), [local])
 
-  // ─────────────────────────────────────────────────────────────────────────
+  const focusInput = e => e.target.style.borderColor = '#10B981'
+  const blurInput = e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'
 
   if (loading) {
     return (
-      <div className="px-4 py-5 md:px-8 md:py-7 max-w-5xl mx-auto w-full space-y-4">
-        <div className="h-8 w-32 bg-[#F2F1EE] rounded animate-pulse mb-6" />
-        <SectionSkeleton />
-        <SectionSkeleton />
-        <SectionSkeleton />
+      <div style={{ background: '#0F172A', minHeight: '100%' }}>
+        <div style={{ padding: '16px 18px 8px' }}>
+          <div style={{ height: 22, background: 'rgba(255,255,255,0.06)', borderRadius: 8, width: 80, marginBottom: 8 }} />
+        </div>
+        <div style={{ padding: '8px 14px 80px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <SectionSkeleton />
+          <SectionSkeleton />
+          <SectionSkeleton />
+        </div>
       </div>
     )
   }
 
   const initial = (user.email?.[0] ?? '?').toUpperCase()
 
+  const chipActive = {
+    background: 'rgba(16,185,129,0.12)',
+    border: '1px solid rgba(16,185,129,0.35)',
+    color: '#34D399',
+  }
+  const chipInactive = {
+    background: 'transparent',
+    border: '1px solid rgba(255,255,255,0.08)',
+    color: '#94A3B8',
+  }
+
   return (
-    <div className="px-4 py-5 md:px-8 md:py-7 max-w-5xl mx-auto w-full space-y-4">
-      <div className="mb-2">
-        <h1 className="text-2xl font-bold text-[#1A1A1A]">Profil</h1>
-        <p className="text-[#6B6B6B] text-sm mt-1">Persönliche Daten und Einstellungen</p>
+    <div style={{ background: '#0F172A', minHeight: '100%' }}>
+      <div style={{ padding: '16px 18px 8px' }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>Profil</h1>
+        <p style={{ fontSize: 13, color: '#94A3B8', marginTop: 4, marginBottom: 0 }}>
+          Persönliche Daten und Einstellungen
+        </p>
       </div>
 
-      {/* ── 1. Account ──────────────────────────────────────────────────── */}
-      <SectionCard title="Account">
-        <div className="flex items-center gap-4">
-          {/* Avatar */}
-          <div
-            className="flex items-center justify-center rounded-full shrink-0 text-white text-xl font-bold"
-            style={{ width: 56, height: 56, backgroundColor: '#2D6A4F' }}
-          >
-            {initial}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-[#6B6B6B] truncate">{user.email}</p>
-            <button
-              onClick={() => supabase.auth.signOut()}
-              className="mt-2 text-sm text-[#991B1B] border border-[#991B1B] rounded-[10px] px-4 py-1.5 hover:bg-red-50 transition-colors"
-            >
-              Abmelden
-            </button>
+      <div style={{ padding: '8px 14px 80px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+        {/* ── 1. Account ──────────────────────────────────────────────────── */}
+        <div style={glass}>
+          <p style={sectionLabel}>Account</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{
+              width: 52, height: 52, borderRadius: '50%', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'linear-gradient(135deg, #10B981, #06B6D4)',
+              fontSize: 20, fontWeight: 700, color: '#fff',
+            }}>
+              {initial}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 13, color: '#94A3B8', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user.email}
+              </p>
+              <button
+                onClick={() => supabase.auth.signOut()}
+                style={{
+                  marginTop: 8, fontSize: 12, fontWeight: 500,
+                  color: '#F87171', border: '1px solid rgba(239,68,68,0.3)',
+                  borderRadius: 8, padding: '5px 12px',
+                  background: 'transparent', cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={e => e.target.style.background = 'rgba(239,68,68,0.08)'}
+                onMouseLeave={e => e.target.style.background = 'transparent'}
+              >
+                Abmelden
+              </button>
+            </div>
           </div>
         </div>
-      </SectionCard>
 
-      {/* ── 2. Körperdaten ──────────────────────────────────────────────── */}
-      <SectionCard title="Körperdaten">
-        <div className="grid grid-cols-2 gap-4">
+        {/* ── 2. Körperdaten ──────────────────────────────────────────────── */}
+        <div style={glass}>
+          <p style={sectionLabel}>Körperdaten</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
 
-          {/* Geschlecht */}
-          <div className="col-span-2">
-            <label className="text-xs text-[#6B6B6B] mb-2 block">Geschlecht</label>
-            <div className="flex gap-2">
-              {[
-                { value: 'maennlich', label: 'Männlich' },
-                { value: 'weiblich',  label: 'Weiblich' },
-                { value: 'divers',    label: 'Divers' },
-              ].map(({ value, label }) => (
+            {/* Geschlecht */}
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={{ fontSize: 11, color: '#94A3B8', display: 'block', marginBottom: 8 }}>Geschlecht</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[
+                  { value: 'maennlich', label: 'Männlich' },
+                  { value: 'weiblich',  label: 'Weiblich' },
+                  { value: 'divers',    label: 'Divers' },
+                ].map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => saveNow({ geschlecht: value })}
+                    style={{
+                      flex: 1, padding: '9px 8px', fontSize: 13,
+                      borderRadius: 10, cursor: 'pointer', transition: 'all 0.2s',
+                      ...(local.geschlecht === value ? chipActive : chipInactive),
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Geburtsdatum */}
+            <div>
+              <label style={{ fontSize: 11, color: '#94A3B8', display: 'block', marginBottom: 6 }}>
+                Geburtsdatum
+                {alter !== null && (
+                  <span style={{ marginLeft: 6, color: '#475569' }}>({alter} Jahre)</span>
+                )}
+              </label>
+              <input
+                type="date"
+                value={local.geburtsdatum}
+                onChange={e => setLocal(p => ({ ...p, geburtsdatum: e.target.value }))}
+                onBlur={() => saveOnBlur('geburtsdatum', local.geburtsdatum)}
+                style={inputStyle}
+                onFocus={focusInput}
+              />
+            </div>
+
+            {/* Größe */}
+            <div>
+              <label style={{ fontSize: 11, color: '#94A3B8', display: 'block', marginBottom: 6 }}>Größe</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="number"
+                  value={local.groesse}
+                  placeholder="175"
+                  onChange={e => setLocal(p => ({ ...p, groesse: e.target.value }))}
+                  onBlur={() => saveOnBlur('groesse', local.groesse)}
+                  style={{ ...inputStyle, paddingRight: 36 }}
+                  onFocus={focusInput}
+                />
+                <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#475569', pointerEvents: 'none' }}>cm</span>
+              </div>
+            </div>
+
+            {/* Gewicht */}
+            <div>
+              <label style={{ fontSize: 11, color: '#94A3B8', display: 'block', marginBottom: 6 }}>Gewicht</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="number"
+                  value={local.gewicht}
+                  placeholder="70.0"
+                  step="0.1"
+                  onChange={e => setLocal(p => ({ ...p, gewicht: e.target.value }))}
+                  onBlur={() => saveOnBlur('gewicht', local.gewicht)}
+                  style={{ ...inputStyle, paddingRight: 36 }}
+                  onFocus={focusInput}
+                />
+                <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#475569', pointerEvents: 'none' }}>kg</span>
+              </div>
+            </div>
+
+            {/* BMI */}
+            {bmi !== null && bmiMeta && (
+              <div style={{
+                gridColumn: '1 / -1',
+                background: `${bmiMeta.color}12`,
+                border: `1px solid ${bmiMeta.color}30`,
+                borderRadius: 12, padding: '14px 16px', textAlign: 'center',
+              }}>
+                <div style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: 28, fontWeight: 700, color: bmiMeta.color, lineHeight: 1,
+                }}>
+                  {bmi.toFixed(1)}
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: bmiMeta.color, marginTop: 4 }}>
+                  {bmiMeta.label}
+                </div>
+                <div style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>Body-Mass-Index</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── 3. Aktivität & Ernährungsweise ──────────────────────────────── */}
+        <div style={glass}>
+          <p style={sectionLabel}>Aktivität &amp; Ernährungsweise</p>
+
+          <div style={{ marginBottom: 18 }}>
+            <label style={{ fontSize: 11, color: '#94A3B8', display: 'block', marginBottom: 8 }}>Aktivitätslevel</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {AKTIVITAET_OPTIONS.map(({ value, label }) => (
                 <button
                   key={value}
-                  onClick={() => saveNow({ geschlecht: value })}
-                  className={`flex-1 px-4 py-2 text-sm rounded-[10px] transition-all ${
-                    local.geschlecht === value
-                      ? 'bg-[#2D6A4F] text-white'
-                      : 'border border-[#E8E6E1] text-[#6B6B6B] hover:border-[#CFCCC5]'
-                  }`}
+                  onClick={() => saveNow({ aktivitaet: value })}
+                  style={{
+                    padding: '8px 14px', fontSize: 13, borderRadius: 10,
+                    cursor: 'pointer', transition: 'all 0.2s',
+                    ...(local.aktivitaet === value ? chipActive : chipInactive),
+                  }}
                 >
                   {label}
                 </button>
@@ -255,209 +377,138 @@ export default function Profil({ user }) {
             </div>
           </div>
 
-          {/* Geburtsdatum */}
-          <InputField
-            label={
-              <>
-                Geburtsdatum
-                {alter !== null && (
-                  <span className="ml-2 text-[#A8A8A8]">({alter} Jahre)</span>
-                )}
-              </>
-            }
-          >
-            <input
-              type="date"
-              value={local.geburtsdatum}
-              onChange={e => setLocal(p => ({ ...p, geburtsdatum: e.target.value }))}
-              onBlur={() => saveOnBlur('geburtsdatum', local.geburtsdatum)}
-              className={inputCls}
-            />
-          </InputField>
-
-          {/* Größe */}
-          <InputField label="Größe">
-            <div className="relative">
-              <input
-                type="number"
-                value={local.groesse}
-                placeholder="175"
-                onChange={e => setLocal(p => ({ ...p, groesse: e.target.value }))}
-                onBlur={() => saveOnBlur('groesse', local.groesse)}
-                className={inputCls + ' pr-10'}
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#A8A8A8] pointer-events-none">
-                cm
-              </span>
+          <div>
+            <label style={{ fontSize: 11, color: '#94A3B8', display: 'block', marginBottom: 8 }}>Ernährungsweise</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              {ERNAEHRUNGSWEISE_OPTIONS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => saveNow({ ernaehrungsweise: value })}
+                  style={{
+                    padding: '8px 6px', fontSize: 12, borderRadius: 10,
+                    cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
+                    ...(local.ernaehrungsweise === value ? chipActive : chipInactive),
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
-          </InputField>
+          </div>
+        </div>
 
-          {/* Gewicht */}
-          <InputField label="Gewicht">
-            <div className="relative">
-              <input
-                type="number"
-                value={local.gewicht}
-                placeholder="70.0"
-                step="0.1"
-                onChange={e => setLocal(p => ({ ...p, gewicht: e.target.value }))}
-                onBlur={() => saveOnBlur('gewicht', local.gewicht)}
-                className={inputCls + ' pr-10'}
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#A8A8A8] pointer-events-none">
-                kg
-              </span>
-            </div>
-          </InputField>
-
-          {/* BMI-Anzeige */}
-          {bmi !== null && bmiMeta && (
-            <div className="col-span-2 rounded-[10px] p-4 text-center bg-[#F8F7F4]">
-              <div className="text-2xl font-bold" style={{ color: bmiMeta.color }}>
-                {bmi.toFixed(1)}
+        {/* ── 4. Kalorienbedarf ───────────────────────────────────────────── */}
+        <div style={glass}>
+          <p style={sectionLabel}>Kalorienbedarf</p>
+          {kalorienbedarf ? (
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(6,182,212,0.06))',
+              border: '1px solid rgba(16,185,129,0.2)',
+              borderRadius: 12, padding: '16px',
+            }}>
+              <div style={{ lineHeight: 1 }}>
+                <span style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: 28, fontWeight: 700, color: '#F1F5F9',
+                }}>
+                  {kalorienbedarf.toLocaleString('de-DE')}
+                </span>
+                <span style={{ fontSize: 13, color: '#94A3B8', marginLeft: 6 }}>kcal / Tag</span>
               </div>
-              <div className="text-sm font-semibold mt-0.5" style={{ color: bmiMeta.color }}>
-                {bmiMeta.label}
-              </div>
-              <div className="text-xs text-[#A8A8A8] mt-0.5">Body-Mass-Index</div>
+              <p style={{ fontSize: 11, color: '#94A3B8', marginTop: 6, marginBottom: 16 }}>
+                Automatisch aus deinen Körperdaten berechnet (Harris-Benedict)
+              </p>
+              <button
+                onClick={handleKcalOvernehmen}
+                style={{
+                  fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 10,
+                  cursor: 'pointer', transition: 'all 0.2s',
+                  ...(kcalSaved
+                    ? { background: 'linear-gradient(135deg, #10B981, #06B6D4)', color: '#fff', border: 'none' }
+                    : { background: 'transparent', color: '#34D399', border: '1px solid rgba(16,185,129,0.35)' }
+                  ),
+                }}
+              >
+                {kcalSaved ? 'Übernommen' : 'Als Ernährungsziel übernehmen'}
+              </button>
             </div>
+          ) : (
+            <p style={{ fontSize: 13, color: '#475569', margin: 0 }}>
+              Fülle Körperdaten aus, um deinen Kalorienbedarf automatisch zu berechnen.
+            </p>
           )}
         </div>
-      </SectionCard>
 
-      {/* ── 3. Aktivität & Ernährungsweise ──────────────────────────────── */}
-      <SectionCard title="Aktivität & Ernährungsweise">
-
-        {/* Aktivitätslevel */}
-        <div className="mb-5">
-          <label className="text-xs text-[#6B6B6B] mb-2 block">Aktivitätslevel</label>
-          <div className="flex flex-wrap gap-2">
-            {AKTIVITAET_OPTIONS.map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => saveNow({ aktivitaet: value })}
-                className={`px-4 py-2 text-sm rounded-[10px] transition-all ${
-                  local.aktivitaet === value
-                    ? 'bg-[#2D6A4F] text-white'
-                    : 'border border-[#E8E6E1] text-[#6B6B6B] hover:border-[#CFCCC5]'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+        {/* ── 5. Lebensmittel-Unverträglichkeiten ─────────────────────────── */}
+        <div style={glass}>
+          <p style={sectionLabel}>Lebensmittel-Unverträglichkeiten</p>
+          <p style={{ fontSize: 11, color: '#475569', marginBottom: 12, marginTop: 0 }}>
+            Bei einem Treffer wirst du beim Hinzufügen eines Lebensmittels gewarnt.
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {FOOD_INTOLERANCE_OPTIONS.map(label => {
+              const isSelected = settings.foodIntolerances.includes(label)
+              return (
+                <button
+                  key={label}
+                  onClick={() => toggleUnvertraeglichkeit(label)}
+                  style={{
+                    padding: '7px 12px', fontSize: 12, fontWeight: 500,
+                    borderRadius: 10, cursor: 'pointer', transition: 'all 0.2s',
+                    ...(isSelected
+                      ? { background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.35)', color: '#FCD34D' }
+                      : chipInactive
+                    ),
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
           </div>
-        </div>
-
-        {/* Ernährungsweise */}
-        <div>
-          <label className="text-xs text-[#6B6B6B] mb-2 block">Ernährungsweise</label>
-          <div className="grid grid-cols-3 gap-2">
-            {ERNAEHRUNGSWEISE_OPTIONS.map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => saveNow({ ernaehrungsweise: value })}
-                className={`px-3 py-2 text-sm rounded-[10px] transition-all text-center ${
-                  local.ernaehrungsweise === value
-                    ? 'bg-[#2D6A4F] text-white'
-                    : 'border border-[#E8E6E1] text-[#6B6B6B] hover:border-[#CFCCC5]'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </SectionCard>
-
-      {/* ── 4. Kalorienbedarf ───────────────────────────────────────────── */}
-      <SectionCard title="Kalorienbedarf">
-        {kalorienbedarf ? (
-          <div className="rounded-[10px] p-4 bg-[#E8F0EC]">
-            <div className="text-2xl font-bold text-[#2D6A4F]">
-              {kalorienbedarf.toLocaleString('de-DE')}
-              <span className="text-sm font-normal text-[#2D6A4F] ml-1">kcal / Tag</span>
-            </div>
-            <p className="text-xs text-[#6B6B6B] mt-1 mb-4">
-              Automatisch aus deinen Körperdaten berechnet (Harris-Benedict)
+          {settings.foodIntolerances.length === 0 && (
+            <p style={{ fontSize: 11, color: '#475569', marginTop: 8, marginBottom: 0 }}>
+              Wähle deine Unverträglichkeiten, um Warnungen beim Erfassen zu erhalten.
             </p>
-            <button
-              onClick={handleKcalOvernehmen}
-              className={`text-sm font-medium px-4 py-2 rounded-[10px] transition-all ${
-                kcalSaved
-                  ? 'bg-[#2D6A4F] text-white'
-                  : 'border border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#2D6A4F] hover:text-white'
-              }`}
-            >
-              {kcalSaved ? 'Übernommen ✓' : 'Als Ernährungsziel übernehmen'}
-            </button>
+          )}
+        </div>
+
+        {/* ── 6. Allergien ────────────────────────────────────────────────── */}
+        <div style={glass}>
+          <p style={sectionLabel}>Allergien</p>
+          <p style={{ fontSize: 11, color: '#475569', marginBottom: 12, marginTop: 0 }}>
+            Diese Einstellungen gelten auch für Allergie-Radar und Dashboard.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {ALLERGEN_OPTIONS.map(({ id, label, color }) => {
+              const isSelected = settings.selectedAllergies.includes(id)
+              return (
+                <button
+                  key={id}
+                  onClick={() => toggleAllergie(id)}
+                  style={{
+                    padding: '9px 12px', fontSize: 12, fontWeight: 500,
+                    borderRadius: 10, cursor: 'pointer', textAlign: 'left',
+                    transition: 'all 0.2s',
+                    ...(isSelected
+                      ? { background: color + '18', border: `1px solid ${color}40`, color }
+                      : chipInactive
+                    ),
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
           </div>
-        ) : (
-          <p className="text-sm text-[#A8A8A8]">
-            Fülle Körperdaten aus, um deinen Kalorienbedarf automatisch zu berechnen.
-          </p>
-        )}
-      </SectionCard>
-
-      {/* ── 5. Lebensmittel-Unverträglichkeiten ─────────────────────────── */}
-      <SectionCard title="Lebensmittel-Unverträglichkeiten">
-        <p className="text-xs text-[#A8A8A8] mb-3">
-          Bei einem Treffer wirst du beim Hinzufügen eines Lebensmittels gewarnt.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {FOOD_INTOLERANCE_OPTIONS.map(label => {
-            const isSelected = settings.foodIntolerances.includes(label)
-            return (
-              <button
-                key={label}
-                onClick={() => toggleUnvertraeglichkeit(label)}
-                className={`px-3 py-2 rounded-[10px] border-2 text-sm font-medium transition-all ${
-                  isSelected
-                    ? 'border-[#B45309] text-[#B45309] bg-[#FEF3C7]'
-                    : 'border-[#E8E6E1] text-[#6B6B6B] bg-white hover:border-[#CFCCC5]'
-                }`}
-              >
-                {label}
-              </button>
-            )
-          })}
+          {settings.selectedAllergies.length === 0 && (
+            <p style={{ fontSize: 11, color: '#475569', marginTop: 8, marginBottom: 0 }}>
+              Wähle deine Allergene, um nur relevante Daten zu sehen.
+            </p>
+          )}
         </div>
-        {settings.foodIntolerances.length === 0 && (
-          <p className="text-xs text-[#A8A8A8] mt-2">
-            Wähle deine Unverträglichkeiten, um Warnungen beim Erfassen zu erhalten.
-          </p>
-        )}
-      </SectionCard>
 
-      {/* ── 6. Allergien ────────────────────────────────────────────────── */}
-      <SectionCard title="Allergien">
-        <p className="text-xs text-[#A8A8A8] mb-3">
-          Diese Einstellungen gelten auch für Allergie-Radar und Dashboard.
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          {ALLERGEN_OPTIONS.map(({ id, label, color }) => {
-            const isSelected = settings.selectedAllergies.includes(id)
-            return (
-              <button
-                key={id}
-                onClick={() => toggleAllergie(id)}
-                className={`px-4 py-2.5 rounded-[10px] border-2 text-sm font-medium transition-all text-left ${
-                  isSelected
-                    ? ''
-                    : 'border-[#E8E6E1] text-[#6B6B6B] bg-white hover:border-[#CFCCC5]'
-                }`}
-                style={isSelected ? { borderColor: color, color, backgroundColor: color + '18' } : {}}
-              >
-                {label}
-              </button>
-            )
-          })}
-        </div>
-        {settings.selectedAllergies.length === 0 && (
-          <p className="text-xs text-[#A8A8A8] mt-2">
-            Wähle deine Allergene, um nur relevante Daten zu sehen.
-          </p>
-        )}
-      </SectionCard>
+      </div>
     </div>
   )
 }

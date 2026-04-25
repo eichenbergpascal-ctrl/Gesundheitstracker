@@ -21,13 +21,16 @@ class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-[#F8F7F4]">
-          <div className="text-center px-6">
-            <p className="text-lg font-semibold text-[#1A1A1A] mb-2">Etwas ist schiefgelaufen.</p>
-            <p className="text-sm text-[#6B6B6B] mb-4">Bitte lade die Seite neu.</p>
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0F172A' }}>
+          <div style={{ textAlign: 'center', padding: '0 24px' }}>
+            <p style={{ fontSize: 16, fontWeight: 600, color: '#F1F5F9', marginBottom: 8 }}>Etwas ist schiefgelaufen.</p>
+            <p style={{ fontSize: 14, color: '#94A3B8', marginBottom: 16 }}>Bitte lade die Seite neu.</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-[#2D6A4F] text-white text-sm rounded-[10px] hover:bg-[#235C42] transition-colors"
+              style={{
+                padding: '10px 20px', background: 'linear-gradient(135deg, #10B981, #06B6D4)',
+                color: '#fff', fontSize: 14, fontWeight: 600, borderRadius: 12, border: 'none', cursor: 'pointer',
+              }}
             >
               Seite neu laden
             </button>
@@ -60,10 +63,19 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center text-gray-400">
-          <div className="text-5xl mb-4 animate-pulse">🌿</div>
-          <p className="text-sm">Gesundheitstracker lädt…</p>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0F172A' }}>
+        <div style={{ textAlign: 'center', color: '#94A3B8' }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: 14, background: 'linear-gradient(135deg, #10B981, #06B6D4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 16px', animation: 'pulse 2s infinite',
+          }}>
+            <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
+              <polyline points="2,13 5,7 9,15 13,5 17,13" stroke="#fff" strokeWidth="2.2"
+                strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <p style={{ fontSize: 14 }}>Vitalio lädt…</p>
         </div>
       </div>
     )
