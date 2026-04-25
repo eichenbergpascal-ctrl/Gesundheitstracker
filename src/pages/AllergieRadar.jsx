@@ -136,7 +136,8 @@ export default function AllergieRadar({ user }) {
   let next8 = []
   if (weather) {
     const now = new Date()
-    const currentHour = now.toISOString().slice(0, 13)
+    const pad = n => String(n).padStart(2, '0')
+    const currentHour = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}`
     const times = weather.hourly.time
     const startIdx = times.findIndex(t => t.startsWith(currentHour))
     if (startIdx !== -1) {
@@ -221,7 +222,7 @@ export default function AllergieRadar({ user }) {
                         background: i === 0 ? 'rgba(6,182,212,0.1)' : 'transparent',
                       }}>
                         <div style={{ fontSize: 9, color: '#94A3B8' }}>
-                          {new Date(time).getHours()}:00
+                          {i === 0 ? 'Jetzt' : `${new Date(time).getHours()}:00`}
                         </div>
                         <div style={{
                           fontFamily: "'JetBrains Mono', monospace",

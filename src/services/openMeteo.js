@@ -21,7 +21,8 @@ export async function fetchUVData(lat, lon) {
 // Findet den Wert für die aktuelle Stunde in Stundendaten
 export function getCurrentHourValue(hourly, variable) {
   const now = new Date()
-  const currentHourStr = now.toISOString().slice(0, 13) // "2024-01-15T14"
+  const pad = n => String(n).padStart(2, '0')
+  const currentHourStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}`
   const times = hourly.time
   const values = hourly[variable]
 
@@ -29,7 +30,7 @@ export function getCurrentHourValue(hourly, variable) {
   if (idx !== -1 && values[idx] != null) return values[idx]
 
   // Fallback: letzter bekannter Wert von heute
-  const todayStr = now.toISOString().slice(0, 10)
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
   for (let i = times.length - 1; i >= 0; i--) {
     if (times[i].startsWith(todayStr) && values[i] != null) return values[i]
   }
