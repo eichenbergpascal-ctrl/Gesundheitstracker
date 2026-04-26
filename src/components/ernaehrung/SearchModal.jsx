@@ -64,6 +64,11 @@ export default function SearchModal({ mahlzeit, user, onClose, onAdd, userIntole
     return () => clearTimeout(t)
   }, [])
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
   async function handleSearch(e) {
     e.preventDefault()
     if (!query.trim()) return
@@ -124,19 +129,19 @@ export default function SearchModal({ mahlzeit, user, onClose, onAdd, userIntole
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
     >
-      <div className="absolute inset-0" onClick={onClose} />
+      <div className="absolute inset-0" onClick={onClose} style={{ touchAction: 'none' }} />
       <div style={{
         position: 'relative',
         background: '#1E293B',
         border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: '16px 16px 0 0',
+        borderRadius: 16,
         width: '100%', maxWidth: 480,
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
-        maxHeight: '90vh',
-      }} className="md:rounded-[16px]">
+        maxHeight: 'min(85vh, calc(100dvh - 48px))',
+      }}>
 
         {/* Header */}
         <div style={{
@@ -192,7 +197,7 @@ export default function SearchModal({ mahlzeit, user, onClose, onAdd, userIntole
         )}
 
         {/* Inhalt */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
 
           {/* Suchansicht */}
           {view === 'search' && (
